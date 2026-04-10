@@ -1,0 +1,18 @@
+anforderungsprofil:
+eine windows desktop app "Die Huf-Macherin"
+verwaltungs- und planungshilfe für eine hufbearbeiterin mit kalender, termin- und erinnerungsfunktion, kundenstamm (pferdebesitzer, zu bearbeitende pferde),rechnung ja/nein.
+kunden mit name, adresse
+pferd mit name, alter (geburtsjahr oder eingabe alter in jahren, ausgabe in jahren), geschlecht (stute, wallach, hengst)
+bemerkungen zum pferd allgemein
+termin hufbearbeitung
+folgetermin 4 wochen später, automatische erinnerung nach 4 wochen zur neuen terminvereinbarung.
+termine in einer kalenderansicht, hauptansicht ist monat, weitere ansicht woche. angezeigt wird besitzer/pferdename
+anlegemaske für kunden/pferde
+
+app soll auf windows laufen, eine android-app daraus ist die logische folge. synchronisation zwischen windows/android
+eintrag der termine in den persönlichen google calendar (login über google-konto).
+kalenderansichten druckbar (html drucken , besser pdf-export)
+
+modernes übersichtliches design, bilder, logos für ui werden noch gemacht.
+
+am android-gerät werden bei bearbeitung fotos gemacht (vorher/nachher, vorne links, vorne rechts, hinten links, hinten rechts) und sollen chronologisch beim jeweiligen pferd abgelegt und verwaltet werden können.

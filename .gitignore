@@ -1,0 +1,37 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+
+# Vite Frontend-Build-Ausgabe (wird zur Laufzeit generiert)
+dist/assets/
+dist/index.html
+dist/vite.svg
+
+# Backend-Build-Ausgaben: NICHT ignorieren (werden für Electron benötigt)
+# dist/db.js, dist/ipc-handler.js, dist/preload.js etc. → im Repo behalten
+
+dist-ssr
+*.local
+
+# SQLite-Datenbank (Benutzerdaten, gehört nicht ins Repo)
+*.db
+*.db-shm
+*.db-wal
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

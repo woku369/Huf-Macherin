@@ -1,0 +1,49 @@
+{
+  "name": "hufmacherin-app",
+  "private": true,
+  "version": "0.0.0",
+  "main": "electron-main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build-frontend": "tsc -b && vite build",
+    "build-backend": "npx tsc src/db.ts --outDir dist --target ES2020 --module commonjs --esModuleInterop --skipLibCheck && npx tsc src/ipc-handler.ts --outDir dist --target ES2020 --module commonjs --esModuleInterop --skipLibCheck && npx tsc src/google-calendar.ts --outDir dist --target ES2020 --module commonjs --esModuleInterop --skipLibCheck && npx tsc src/feiertage-at.ts --outDir dist --target ES2020 --module commonjs --esModuleInterop --skipLibCheck && npx tsc src/preload.ts --outDir dist --target ES2020 --module commonjs --skipLibCheck",
+    "build": "npm run build-backend && npm run build-frontend && npm run build-backend && npm run fix-html-paths",
+    "build-main": "npm run build-backend",
+    "build-all": "npm run build",
+    "fix-html-paths": "node -e \"const fs=require('fs'); const html=fs.readFileSync('dist/index.html','utf8').replace(/\\/assets\\//g,'./assets/').replace(/\\/vite.svg/g,'./vite.svg'); fs.writeFileSync('dist/index.html',html); console.log('HTML-Pfade korrigiert');\"",
+    "start-electron": "npx electron .",
+    "start": "npm run build-all && npm run start-electron",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\""
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0",
+    "date-fns": "^4.1.0",
+    "googleapis": "^150.0.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "react": "^19.1.0",
+    "react-big-calendar": "^1.19.4",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.29.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/electron": "^1.4.38",
+    "@types/react": "^19.1.8",
+    "@types/react-big-calendar": "^1.16.2",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.5.2",
+    "concurrently": "^9.2.0",
+    "electron": "^37.1.0",
+    "eslint": "^9.29.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.2.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.34.1",
+    "vite": "^7.0.0",
+    "wait-on": "^8.0.3"
+  }
+}
