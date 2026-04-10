@@ -28,13 +28,17 @@ function initDb() {
     CREATE TABLE IF NOT EXISTS termine (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       pferdId INTEGER,
+      kundeId INTEGER,
       datum TEXT,
       rechnung INTEGER,
       bemerkung TEXT,
       ende TEXT,
       status TEXT DEFAULT 'geplant',
       hufbemerkungen TEXT,
-      FOREIGN KEY (pferdId) REFERENCES pferde(id)
+      typ TEXT DEFAULT 'hufbearbeitung',
+      titelManuell TEXT,
+      FOREIGN KEY (pferdId) REFERENCES pferde(id),
+      FOREIGN KEY (kundeId) REFERENCES kunden(id)
     );
     CREATE TABLE IF NOT EXISTS hufbearbeitungen (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,6 +71,24 @@ function initDb() {
   
   try {
     db.exec(`ALTER TABLE kunden ADD COLUMN vorname TEXT;`);
+  } catch (e) {
+    // Spalte existiert bereits
+  }
+
+  try {
+    db.exec(`ALTER TABLE termine ADD COLUMN typ TEXT DEFAULT 'hufbearbeitung';`);
+  } catch (e) {
+    // Spalte existiert bereits
+  }
+
+  try {
+    db.exec(`ALTER TABLE termine ADD COLUMN kundeId INTEGER;`);
+  } catch (e) {
+    // Spalte existiert bereits
+  }
+
+  try {
+    db.exec(`ALTER TABLE termine ADD COLUMN titelManuell TEXT;`);
   } catch (e) {
     // Spalte existiert bereits
   }

@@ -126,33 +126,69 @@ ipcMain.handle('termine:update', async (_event: any, termin: Termin) => {
 // Erweiterte Termin-API für Mehrfach-Pferde-Termine
 ipcMain.handle('termine:addMultiple', async (_event: any, terminDaten: { 
   pferdIds: number[], 
+  kundeId?: number | null,
   datum: string, 
   ende?: string | null, 
   bemerkung: string, 
   titel?: string,
-  status?: string 
+  status?: string,
+  typ?: string,
+  titelManuell?: string | null
 }) => {
   const erstellteTermine = [];
-  const stmt = db.prepare('INSERT INTO termine (pferdId, datum, rechnung, bemerkung, ende, status, hufbemerkungen) VALUES (?, ?, ?, ?, ?, ?, ?)');
-  
-  for (const pferdId of terminDaten.pferdIds) {
+  const typ = terminDaten.typ || 'hufbearbeitung';
+
+  if (typ === 'eigener_termin') {
+    // Eigener Termin: kein Pferd, kein Kunde
+    const stmt = db.prepare('INSERT INTO termine (datum, rechnung, bemerkung, ende, status, typ, titelManuell) VALUES (?, ?, ?, ?, ?, ?, ?)');
     const info = stmt.run(
-      pferdId, 
-      terminDaten.datum, 
-      0, // rechnung = false per default
-      terminDaten.bemerkung, 
-      terminDaten.ende || null, 
-      terminDaten.status || 'vorreserviert', 
-      null
+      terminDaten.datum,
+      0,
+      terminDaten.bemerkung,
+      terminDaten.ende || null,
+      'bestaetigt',
+      typ,
+      terminDaten.titelManuell || terminDaten.titel || null
     );
-    erstellteTermine.push({ 
-      id: Number(info.lastInsertRowid), 
-      pferdId, 
-      datum: terminDaten.datum,
-      ende: terminDaten.ende,
-      bemerkung: terminDaten.bemerkung,
-      status: terminDaten.status || 'vorreserviert'
-    });
+    erstellteTermine.push({ id: Number(info.lastInsertRowid), datum: terminDaten.datum, typ });
+  } else if (typ === 'reitstunde') {
+    // Reitstunde: Kunde, kein Pferd nötig
+    const stmt = db.prepare('INSERT INTO termine (kundeId, datum, rechnung, bemerkung, ende, status, typ) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    const info = stmt.run(
+      terminDaten.kundeId || null,
+      terminDaten.datum,
+      0,
+      terminDaten.bemerkung,
+      terminDaten.ende || null,
+      terminDaten.status || 'vorreserviert',
+      typ
+    );
+    erstellteTermine.push({ id: Number(info.lastInsertRowid), kundeId: terminDaten.kundeId, datum: terminDaten.datum, typ });
+  } else {
+    // hufbearbeitung: Pferd(e) + Kunde via Pferd
+    const stmt = db.prepare('INSERT INTO termine (pferdId, kundeId, datum, rechnung, bemerkung, ende, status, hufbemerkungen, typ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    for (const pferdId of terminDaten.pferdIds) {
+      const info = stmt.run(
+        pferdId,
+        terminDaten.kundeId || null,
+        terminDaten.datum, 
+        0,
+        terminDaten.bemerkung, 
+        terminDaten.ende || null, 
+        terminDaten.status || 'vorreserviert',
+        null,
+        typ
+      );
+      erstellteTermine.push({ 
+        id: Number(info.lastInsertRowid), 
+        pferdId, 
+        datum: terminDaten.datum,
+        ende: terminDaten.ende,
+        bemerkung: terminDaten.bemerkung,
+        status: terminDaten.status || 'vorreserviert',
+        typ
+      });
+    }
   }
   
   return erstellteTermine;
@@ -188,10 +224,14 @@ ipcMain.handle('pferde:getLastBearbeitung', (_event: any, pferdId: number) => {
 ipcMain.handle('alleTermine:list', () => {
   const stmt = db.prepare(`
     SELECT termine.id, termine.datum, termine.ende, termine.bemerkung, termine.rechnung, termine.status, termine.hufbemerkungen,
-           pferde.name as pferdName, kunden.name as besitzerName, kunden.vorname as besitzerVorname
+           termine.typ, termine.titelManuell, termine.kundeId,
+           pferde.name as pferdName,
+           COALESCE(kunden_pferd.name, kunden_direkt.name) as besitzerName,
+           COALESCE(kunden_pferd.vorname, kunden_direkt.vorname) as besitzerVorname
     FROM termine
-    JOIN pferde ON termine.pferdId = pferde.id
-    JOIN kunden ON pferde.besitzerId = kunden.id
+    LEFT JOIN pferde ON termine.pferdId = pferde.id
+    LEFT JOIN kunden kunden_pferd ON pferde.besitzerId = kunden_pferd.id
+    LEFT JOIN kunden kunden_direkt ON termine.kundeId = kunden_direkt.id
     ORDER BY termine.datum ASC
   `);
   return stmt.all();

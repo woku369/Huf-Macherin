@@ -31,8 +31,10 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
   }
 
-  // DevTools immer verfügbar machen (auch in Production)
-  mainWindow.webContents.openDevTools();
+  // DevTools nur im Entwicklungsmodus öffnen
+  if (isDev) {
+    mainWindow.webContents.openDevTools();
+  }
 
   mainWindow.on('closed', () => {
     mainWindow = null;

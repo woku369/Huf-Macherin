@@ -57,6 +57,14 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
     geschlecht: 'Stute',
     bemerkungen: ''
   });
+
+  // Kunden-Anlegen-Formular
+  const [showKundeForm, setShowKundeForm] = useState(false);
+  const [kundeFormData, setKundeFormData] = useState({
+    name: '',
+    vorname: '',
+    adresse: ''
+  });
   
   // Kunden- und Pferde-Daten
   const [kunden, setKunden] = useState<any[]>([]);
@@ -69,21 +77,28 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
     ausgewaehltePferde: [] as number[],
     bemerkung: '',
     uhrzeit: '09:00',
-    bisUhrzeit: '10:00'
+    bisUhrzeit: '10:00',
+    typ: 'hufbearbeitung' as 'hufbearbeitung' | 'reitstunde' | 'eigener_termin'
   });
 
   const events: TerminEvent[] = useMemo(() =>
     termine.map((t: any) => {
-      // Titel: "Kunde (Pferd)" - Kunde steht im Vordergrund
-      const kundeName = t.besitzerName ? `${t.besitzerName} ${t.besitzerVorname || ''}`.trim() : 'Unbekannt';
-      const pferdName = t.pferdName || 'Unbekannt';
-      
-      let displayTitle = t.titel || t.titelText || t.beschreibung;
-      if (!displayTitle) {
-        displayTitle = `${kundeName} (${pferdName})`;
+      const typ = t.typ || 'hufbearbeitung';
+      const kundeName = t.besitzerName ? `${t.besitzerName} ${t.besitzerVorname || ''}`.trim() : null;
+      const pferdName = t.pferdName || null;
+
+      let displayTitle: string;
+      if (typ === 'eigener_termin') {
+        displayTitle = t.titelManuell || t.bemerkung || 'Eigener Termin';
+      } else if (typ === 'reitstunde') {
+        displayTitle = kundeName ? `🏇 ${kundeName}` : '🏇 Reitstunde';
       } else {
-        // Wenn ein Titel vorhanden ist, füge Kunde und Pferd hinzu
-        displayTitle = `${kundeName} (${pferdName}) - ${displayTitle}`;
+        // hufbearbeitung
+        if (kundeName && pferdName) {
+          displayTitle = `${kundeName} (${pferdName})`;
+        } else {
+          displayTitle = t.titelText || t.beschreibung || 'Termin';
+        }
       }
       
       return {
@@ -386,7 +401,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       ausgewaehltePferde: [],
       bemerkung: '',
       uhrzeit: startTime,
-      bisUhrzeit: '' // Leer lassen für optionale Endzeit
+      bisUhrzeit: '', // Leer lassen für optionale Endzeit
+      typ: 'hufbearbeitung'
     });
     setShowCreateForm(true);
     
@@ -397,19 +413,24 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
   };
 
   const handleCreateTermin = async () => {
-    // Validierung: selectedDate und (Kunde und mind. ein Pferd) müssen vorhanden sein
+    // Validierung je nach Typ
     if (!selectedDate) {
       alert('Fehler: Kein Datum ausgewählt!');
       return;
     }
     
-    if (!createFormData.kundeId.trim()) {
+    if (createFormData.typ !== 'eigener_termin' && !createFormData.kundeId.trim()) {
       alert('Bitte einen Kunden auswählen!');
       return;
     }
 
-    if (createFormData.ausgewaehltePferde.length === 0) {
+    if (createFormData.typ === 'hufbearbeitung' && createFormData.ausgewaehltePferde.length === 0) {
       alert('Bitte mindestens ein Pferd auswählen!');
+      return;
+    }
+
+    if (createFormData.typ === 'eigener_termin' && !createFormData.titel.trim()) {
+      alert('Bitte einen Titel für den eigenen Termin eingeben!');
       return;
     }
 
@@ -439,12 +460,15 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
 
       // Erstelle Termine für alle ausgewählten Pferde mit Status "vorreserviert"
       const terminDaten = {
-        pferdIds: createFormData.ausgewaehltePferde,
+        pferdIds: createFormData.typ === 'hufbearbeitung' ? createFormData.ausgewaehltePferde : [],
+        kundeId: createFormData.kundeId ? parseInt(createFormData.kundeId) : null,
         datum: terminStart.toISOString(),
         ende: terminEnde ? terminEnde.toISOString() : null,
         bemerkung: createFormData.bemerkung,
         titel: terminTitel,
-        status: 'vorreserviert'
+        status: createFormData.typ === 'eigener_termin' ? 'bestaetigt' : 'vorreserviert',
+        typ: createFormData.typ,
+        titelManuell: createFormData.typ === 'eigener_termin' ? createFormData.titel : null
       };
 
       await window.api.addMultipleTermine(terminDaten);
@@ -463,7 +487,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
         ausgewaehltePferde: [],
         bemerkung: '',
         uhrzeit: '09:00',
-        bisUhrzeit: ''
+        bisUhrzeit: '',
+        typ: 'hufbearbeitung'
       });
 
       // Aktualisiere Termine falls Callback vorhanden
@@ -525,6 +550,32 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
   };
 
   // Neues Pferd anlegen
+  const handleCreateKunde = async () => {
+    if (!kundeFormData.name.trim()) {
+      alert('Bitte geben Sie einen Nachnamen ein!');
+      return;
+    }
+    try {
+      const neuerKunde = await window.api.addKunde({
+        name: kundeFormData.name,
+        vorname: kundeFormData.vorname,
+        adresse: kundeFormData.adresse
+      });
+      // Kunden-Liste aktualisieren
+      const updatedKunden = await window.api.listKunden();
+      setKunden(updatedKunden);
+      // Neuen Kunden automatisch auswählen
+      setCreateFormData(prev => ({ ...prev, kundeId: String(neuerKunde.id) }));
+      // Pferde für neuen Kunden laden (leer)
+      setVerfuegbarePferde([]);
+      // Formular zurücksetzen und schließen
+      setKundeFormData({ name: '', vorname: '', adresse: '' });
+      setShowKundeForm(false);
+    } catch (error) {
+      alert('Fehler beim Anlegen des Kunden: ' + error);
+    }
+  };
+
   const handleCreatePferd = async () => {
     if (!createFormData.kundeId) {
       alert('Bitte wählen Sie zuerst einen Kunden aus!');
@@ -689,19 +740,32 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             padding: '20px'
           }}
-          eventPropGetter={(event) => ({
-            style: {
-              backgroundColor: event.resource?.status === 'abgeschlossen' ? '#27ae60' : 
-                              event.resource?.status === 'vorschlag' ? '#f39c12' : 
-                              event.resource?.status === 'vorreserviert' ? '#9b59b6' :
-                              event.resource?.status === 'bestätigt' ? '#3498db' : '#95a5a6',
-              borderRadius: '3px',
-              opacity: 0.8,
-              color: 'white',
-              border: '0px',
-              display: 'block'
+          eventPropGetter={(event) => {
+            const typ = event.resource?.typ || 'hufbearbeitung';
+            const status = event.resource?.status;
+            let bg: string;
+            if (typ === 'eigener_termin') {
+              bg = '#c0392b';
+            } else if (typ === 'reitstunde') {
+              bg = status === 'abgeschlossen' ? '#d35400' : '#e67e22';
+            } else {
+              // hufbearbeitung
+              bg = status === 'abgeschlossen' ? '#27ae60' :
+                   status === 'vorschlag'     ? '#f39c12' :
+                   status === 'vorreserviert' ? '#9b59b6' :
+                   status === 'bestätigt'     ? '#3498db' : '#95a5a6';
             }
-          })}
+            return {
+              style: {
+                backgroundColor: bg,
+                borderRadius: '3px',
+                opacity: 0.85,
+                color: 'white',
+                border: '0px',
+                display: 'block'
+              }
+            };
+          }}
         />
       </div>
 
@@ -957,6 +1021,40 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             </div>
 
             <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+              {/* Termin-Typ Auswahl */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#2c3e50', fontSize: '14px' }}>
+                  Termintyp *
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  {([
+                    { value: 'hufbearbeitung', label: '🐴 Hufbearbeitung', color: '#8e44ad' },
+                    { value: 'reitstunde', label: '🏇 Reitstunde', color: '#e67e22' },
+                    { value: 'eigener_termin', label: '🔴 Eigener Termin', color: '#c0392b' },
+                  ] as const).map(({ value, label, color }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setCreateFormData(prev => ({ ...prev, typ: value, kundeId: '', ausgewaehltePferde: [] }))}
+                      style={{
+                        padding: '10px 6px',
+                        backgroundColor: createFormData.typ === value ? color : '#f0f0f0',
+                        color: createFormData.typ === value ? 'white' : '#555',
+                        border: `2px solid ${createFormData.typ === value ? color : '#ddd'}`,
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label style={{ 
                   display: 'block', 
@@ -965,7 +1063,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   color: '#2c3e50',
                   fontSize: '14px'
                 }}>
-                  Titel (optional)
+                  {createFormData.typ === 'eigener_termin' ? 'Titel *' : 'Titel (optional)'}
                 </label>
                 <input
                   type="text"
@@ -1056,6 +1154,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                 </div>
               </div>
 
+              {/* Kunden-Auswahl: nicht bei eigenem Termin */}
+              {createFormData.typ !== 'eigener_termin' && (
               <div>
                 <label style={{ 
                   display: 'block', 
@@ -1093,7 +1193,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   </select>
                   <button
                     type="button"
-                    onClick={() => alert('Funktionalität "Neuen Kunde anlegen" wird in Kürze implementiert.')}
+                    onClick={() => setShowKundeForm(true)}
                     style={{
                       padding: '8px 12px',
                       backgroundColor: '#3498db',
@@ -1110,8 +1210,10 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                 </div>
               </div>
 
-              {/* Pferde-Auswahl (nur wenn Kunde ausgewählt) */}
-              {createFormData.kundeId && (
+              )}
+
+              {/* Pferde-Auswahl: nur bei Hufbearbeitung und wenn Kunde gewählt */}
+              {createFormData.typ === 'hufbearbeitung' && createFormData.kundeId && (
                 <div>
                   <label style={{ 
                     display: 'block', 
@@ -1539,6 +1641,101 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             }}>
               <strong>✅ Hinweis:</strong> Nach dem Speichern wird automatisch ein Folgetermin-Vorschlag erstellt und der Termin als "abgeschlossen" markiert.
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal für Kunden-Anlegen */}
+      {showKundeForm && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000
+          }}
+          onClick={() => setShowKundeForm(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              width: '400px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
+              border: '1px solid #e1e8ed'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ margin: '0 0 8px 0', color: '#2c3e50', fontSize: '20px', fontWeight: 'bold' }}>
+                👤 Neuen Kunden anlegen
+              </h3>
+            </div>
+            <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2c3e50', fontSize: '14px' }}>Nachname *</label>
+                  <input
+                    type="text"
+                    value={kundeFormData.name}
+                    onChange={(e) => setKundeFormData({...kundeFormData, name: e.target.value})}
+                    placeholder="z.B. Müller"
+                    style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                    onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                    onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2c3e50', fontSize: '14px' }}>Vorname</label>
+                  <input
+                    type="text"
+                    value={kundeFormData.vorname}
+                    onChange={(e) => setKundeFormData({...kundeFormData, vorname: e.target.value})}
+                    placeholder="z.B. Anna"
+                    style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                    onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                    onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2c3e50', fontSize: '14px' }}>Adresse</label>
+                <input
+                  type="text"
+                  value={kundeFormData.adresse}
+                  onChange={(e) => setKundeFormData({...kundeFormData, adresse: e.target.value})}
+                  placeholder="z.B. Hauptstraße 5, 4020 Linz"
+                  style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                  onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                  onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowKundeForm(false)}
+                  style={{ padding: '10px 20px', backgroundColor: '#95a5a6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateKunde}
+                  style={{ padding: '10px 20px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                >
+                  👤 Kunden anlegen
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
