@@ -1,6 +1,58 @@
 // IPC-Handler für Kunden- und Pferdeverwaltung im Electron-Main-Prozess
 const { ipcMain } = require('electron');
 const { db, addHufbearbeitung, listHufbearbeitungen } = require('./db.js');
+function mapHistorieMitIntervallen(rows) {
+    return rows.map((row, index) => {
+        const nextOlder = rows[index + 1];
+        let intervallTage = null;
+        if (nextOlder) {
+            const currentTs = new Date(row.datum).getTime();
+            const olderTs = new Date(nextOlder.datum).getTime();
+            const diffMs = currentTs - olderTs;
+            if (!Number.isNaN(diffMs) && diffMs >= 0) {
+                intervallTage = Math.round(diffMs / (1000 * 60 * 60 * 24));
+            }
+        }
+        return {
+            terminId: row.terminId,
+            datum: row.datum,
+            status: row.status,
+            terminBemerkung: row.terminBemerkung || null,
+            bearbeitung: row.bearbeitung || null,
+            bearbeitungsBemerkung: row.bearbeitungsBemerkung || null,
+            intervallTage,
+            intervallWochen: intervallTage !== null ? Number((intervallTage / 7).toFixed(1)) : null,
+        };
+    });
+}
+function gruppiereKundenHistorie(rows) {
+    const byPferd = new Map();
+    for (const row of rows) {
+        if (!byPferd.has(row.pferdId)) {
+            byPferd.set(row.pferdId, { pferdName: row.pferdName, rows: [] });
+        }
+        byPferd.get(row.pferdId)?.rows.push(row);
+    }
+    const gruppen = [];
+    for (const [pferdId, data] of byPferd.entries()) {
+        const eintraege = mapHistorieMitIntervallen(data.rows);
+        const intervalle = eintraege
+            .map(e => e.intervallWochen)
+            .filter((w) => typeof w === 'number');
+        const durchschnittIntervallWochen = intervalle.length > 0
+            ? Number((intervalle.reduce((sum, w) => sum + w, 0) / intervalle.length).toFixed(1))
+            : null;
+        gruppen.push({
+            pferdId,
+            pferdName: data.pferdName,
+            eintraege,
+            letzterTermin: eintraege[0]?.datum || null,
+            durchschnittIntervallWochen,
+        });
+    }
+    gruppen.sort((a, b) => a.pferdName.localeCompare(b.pferdName, 'de'));
+    return gruppen;
+}
 // Kunden-API
 ipcMain.handle('kunden:list', () => {
     const stmt = db.prepare('SELECT * FROM kunden');
@@ -129,6 +181,49 @@ ipcMain.handle('pferde:getLastBearbeitung', (_event, pferdId) => {
         };
     }
     return null;
+});
+// Historie für ein einzelnes Pferd
+ipcMain.handle('pferde:history', (_event, pferdId) => {
+    const stmt = db.prepare(`
+    SELECT
+      termine.id as terminId,
+      termine.datum as datum,
+      termine.status as status,
+      termine.bemerkung as terminBemerkung,
+      hb.bearbeitung as bearbeitung,
+      hb.bemerkungen as bearbeitungsBemerkung
+    FROM termine
+    LEFT JOIN hufbearbeitungen hb ON hb.terminId = termine.id
+    WHERE termine.pferdId = ?
+      AND termine.typ = 'hufbearbeitung'
+      AND (termine.status = 'abgeschlossen' OR hb.id IS NOT NULL)
+    ORDER BY termine.datum DESC
+  `);
+    const rows = stmt.all(pferdId);
+    return mapHistorieMitIntervallen(rows);
+});
+// Historie für alle Pferde eines Kunden (gruppiert)
+ipcMain.handle('kunden:history', (_event, besitzerId) => {
+    const stmt = db.prepare(`
+    SELECT
+      pferde.id as pferdId,
+      pferde.name as pferdName,
+      termine.id as terminId,
+      termine.datum as datum,
+      termine.status as status,
+      termine.bemerkung as terminBemerkung,
+      hb.bearbeitung as bearbeitung,
+      hb.bemerkungen as bearbeitungsBemerkung
+    FROM pferde
+    LEFT JOIN termine ON termine.pferdId = pferde.id
+    LEFT JOIN hufbearbeitungen hb ON hb.terminId = termine.id
+    WHERE pferde.besitzerId = ?
+      AND termine.typ = 'hufbearbeitung'
+      AND (termine.status = 'abgeschlossen' OR hb.id IS NOT NULL)
+    ORDER BY pferde.name ASC, termine.datum DESC
+  `);
+    const rows = stmt.all(besitzerId);
+    return gruppiereKundenHistorie(rows);
 });
 // Alle Termine für Kalenderansicht
 ipcMain.handle('alleTermine:list', () => {

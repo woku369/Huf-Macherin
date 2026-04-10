@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('api', {
   updatePferd: (pferd: any) => ipcRenderer.invoke('pferde:update', pferd),
   deletePferd: (id: number) => ipcRenderer.invoke('pferde:delete', id),
   getLastBearbeitung: (pferdId: number) => ipcRenderer.invoke('pferde:getLastBearbeitung', pferdId),
+  getPferdHistorie: (pferdId: number) => ipcRenderer.invoke('pferde:history', pferdId),
+  getKundenHistorie: (besitzerId: number) => ipcRenderer.invoke('kunden:history', besitzerId),
 
   // Termine-API
   listTermine: (pferdId: number) => ipcRenderer.invoke('termine:list', pferdId),

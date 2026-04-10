@@ -10,8 +10,29 @@ interface Pferd {
   besitzerId: number;
 }
 
+interface BearbeitungsHistorieEintrag {
+  terminId: number;
+  datum: string;
+  status: string;
+  terminBemerkung: string | null;
+  bearbeitung: string | null;
+  bearbeitungsBemerkung: string | null;
+  intervallTage: number | null;
+  intervallWochen: number | null;
+}
+
+interface PferdHistorieGruppe {
+  pferdId: number;
+  pferdName: string;
+  eintraege: BearbeitungsHistorieEintrag[];
+  letzterTermin: string | null;
+  durchschnittIntervallWochen: number | null;
+}
+
 export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
   const [pferde, setPferde] = useState<Pferd[]>([]);
+  const [historie, setHistorie] = useState<PferdHistorieGruppe[]>([]);
+  const [historieLoading, setHistorieLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', geburtsjahr: '', geschlecht: 'Stute', bemerkungen: '' });
   const [notice, setNotice] = useState<{ type: 'error' | 'success' | 'warning' | 'info'; message: string } | null>(null);
@@ -21,8 +42,24 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
   const [editingPferd, setEditingPferd] = useState<Pferd | null>(null);
   const [editForm, setEditForm] = useState({ name: '', geburtsjahr: '', geschlecht: 'Stute', bemerkungen: '' });
 
+  const loadPferde = async () => {
+    const data = await window.api.listPferde(besitzerId);
+    setPferde(data);
+  };
+
+  const loadHistorie = async () => {
+    setHistorieLoading(true);
+    try {
+      const data = await window.api.getKundenHistorie(besitzerId);
+      setHistorie(data);
+    } finally {
+      setHistorieLoading(false);
+    }
+  };
+
   useEffect(() => {
-    window.api.listPferde(besitzerId).then(setPferde);
+    loadPferde();
+    loadHistorie();
   }, [besitzerId]);
 
   const addPferd = async (e: React.FormEvent) => {
@@ -41,6 +78,7 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
     setForm({ name: '', geburtsjahr: '', geschlecht: 'Stute', bemerkungen: '' });
     setShowForm(false);
     setNotice({ type: 'success', message: `Pferd "${neuesPferd.name}" wurde angelegt.` });
+    await loadHistorie();
   };
 
   const startEditPferd = (pferd: Pferd) => {
@@ -67,6 +105,7 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
     setPferde(pferde.map(p => p.id === updatedPferd.id ? updatedPferd : p));
     setEditingPferd(null);
     setNotice({ type: 'success', message: `Pferd "${updatedPferd.name}" wurde gespeichert.` });
+    await loadHistorie();
   };
 
   const cancelEditPferd = () => {
@@ -89,11 +128,17 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
     setPferde(pferde.filter(p => p.id !== id));
     setPendingDeletePferdId(null);
     setNotice({ type: 'success', message: 'Pferd wurde gelöscht.' });
+    await loadHistorie();
   };
 
   const cancelDeletePferd = () => {
     setPendingDeletePferdId(null);
     setNotice({ type: 'info', message: 'Löschvorgang abgebrochen.' });
+  };
+
+  const formatDatum = (iso: string) => {
+    const date = new Date(iso);
+    return `${date.toLocaleDateString('de-AT')} ${date.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })}`;
   };
 
   return (
@@ -269,6 +314,78 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
           ))}
         </div>
       )}
+
+      <div style={{ marginTop: '22px', paddingTop: '16px', borderTop: '1px solid #ddd6cb' }}>
+        <h3 style={{ margin: '0 0 10px 0', color: '#2f3636' }}>Bearbeitungshistorie</h3>
+        <p style={{ margin: '0 0 14px 0', color: '#6d665c', fontSize: '13px' }}>
+          Verlauf je Pferd mit Abständen zwischen abgeschlossenen Bearbeitungsterminen und hinterlegten Bemerkungen.
+        </p>
+
+        {historieLoading ? (
+          <div style={{ color: '#6d665c', fontSize: '13px' }}>Historie wird geladen...</div>
+        ) : historie.length === 0 ? (
+          <div style={{ color: '#6d665c', fontSize: '13px', fontStyle: 'italic' }}>
+            Für diesen Kunden sind noch keine abgeschlossenen Hufbearbeitungen mit Historie vorhanden.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: '12px' }}>
+            {historie.map((gruppe) => (
+              <div
+                key={gruppe.pferdId}
+                style={{
+                  border: '1px solid #ddd6cb',
+                  borderRadius: '10px',
+                  backgroundColor: '#fcfaf7',
+                  padding: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                  <div style={{ fontWeight: 700, color: '#2f3636' }}>{gruppe.pferdName}</div>
+                  <div style={{ fontSize: '12px', color: '#6d665c', display: 'flex', gap: '12px' }}>
+                    <span>Letzter Termin: {gruppe.letzterTermin ? formatDatum(gruppe.letzterTermin) : '-'}</span>
+                    <span>Ø Intervall: {gruppe.durchschnittIntervallWochen ? `${gruppe.durchschnittIntervallWochen} Wochen` : '-'}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  {gruppe.eintraege.map((eintrag) => (
+                    <div
+                      key={eintrag.terminId}
+                      style={{
+                        border: '1px solid #e5ded2',
+                        borderRadius: '8px',
+                        backgroundColor: 'white',
+                        padding: '10px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                        <strong style={{ color: '#2f3636' }}>{formatDatum(eintrag.datum)}</strong>
+                        <span style={{ fontSize: '12px', color: '#6d665c' }}>
+                          {eintrag.intervallWochen !== null
+                            ? `Abstand: ${eintrag.intervallWochen} Wochen`
+                            : 'Erster dokumentierter Eintrag'}
+                        </span>
+                      </div>
+
+                      {(eintrag.bearbeitung || eintrag.bearbeitungsBemerkung || eintrag.terminBemerkung) ? (
+                        <div style={{ fontSize: '13px', color: '#4a433a', display: 'grid', gap: '4px' }}>
+                          {eintrag.bearbeitung && <div><strong>Bearbeitung:</strong> {eintrag.bearbeitung}</div>}
+                          {eintrag.bearbeitungsBemerkung && <div><strong>Notiz:</strong> {eintrag.bearbeitungsBemerkung}</div>}
+                          {eintrag.terminBemerkung && <div><strong>Termin:</strong> {eintrag.terminBemerkung}</div>}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '13px', color: '#8a8f8b', fontStyle: 'italic' }}>
+                          Keine Bemerkungen hinterlegt.
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       
       {showForm ? (
         <div style={{ 

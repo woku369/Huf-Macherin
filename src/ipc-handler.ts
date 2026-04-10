@@ -38,6 +38,83 @@ interface Hufbearbeitung {
   bemerkungen: string;
 }
 
+interface BearbeitungsHistorieEintrag {
+  terminId: number;
+  datum: string;
+  status: string;
+  terminBemerkung: string | null;
+  bearbeitung: string | null;
+  bearbeitungsBemerkung: string | null;
+  intervallTage: number | null;
+  intervallWochen: number | null;
+}
+
+interface PferdHistorieGruppe {
+  pferdId: number;
+  pferdName: string;
+  eintraege: BearbeitungsHistorieEintrag[];
+  letzterTermin: string | null;
+  durchschnittIntervallWochen: number | null;
+}
+
+function mapHistorieMitIntervallen(rows: any[]): BearbeitungsHistorieEintrag[] {
+  return rows.map((row, index) => {
+    const nextOlder = rows[index + 1];
+    let intervallTage: number | null = null;
+    if (nextOlder) {
+      const currentTs = new Date(row.datum).getTime();
+      const olderTs = new Date(nextOlder.datum).getTime();
+      const diffMs = currentTs - olderTs;
+      if (!Number.isNaN(diffMs) && diffMs >= 0) {
+        intervallTage = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      }
+    }
+
+    return {
+      terminId: row.terminId,
+      datum: row.datum,
+      status: row.status,
+      terminBemerkung: row.terminBemerkung || null,
+      bearbeitung: row.bearbeitung || null,
+      bearbeitungsBemerkung: row.bearbeitungsBemerkung || null,
+      intervallTage,
+      intervallWochen: intervallTage !== null ? Number((intervallTage / 7).toFixed(1)) : null,
+    };
+  });
+}
+
+function gruppiereKundenHistorie(rows: any[]): PferdHistorieGruppe[] {
+  const byPferd = new Map<number, { pferdName: string; rows: any[] }>();
+  for (const row of rows) {
+    if (!byPferd.has(row.pferdId)) {
+      byPferd.set(row.pferdId, { pferdName: row.pferdName, rows: [] });
+    }
+    byPferd.get(row.pferdId)?.rows.push(row);
+  }
+
+  const gruppen: PferdHistorieGruppe[] = [];
+  for (const [pferdId, data] of byPferd.entries()) {
+    const eintraege = mapHistorieMitIntervallen(data.rows);
+    const intervalle = eintraege
+      .map(e => e.intervallWochen)
+      .filter((w): w is number => typeof w === 'number');
+    const durchschnittIntervallWochen = intervalle.length > 0
+      ? Number((intervalle.reduce((sum, w) => sum + w, 0) / intervalle.length).toFixed(1))
+      : null;
+
+    gruppen.push({
+      pferdId,
+      pferdName: data.pferdName,
+      eintraege,
+      letzterTermin: eintraege[0]?.datum || null,
+      durchschnittIntervallWochen,
+    });
+  }
+
+  gruppen.sort((a, b) => a.pferdName.localeCompare(b.pferdName, 'de'));
+  return gruppen;
+}
+
 // Kunden-API
 ipcMain.handle('kunden:list', () => {
   const stmt = db.prepare('SELECT * FROM kunden');
@@ -212,6 +289,51 @@ ipcMain.handle('pferde:getLastBearbeitung', (_event: any, pferdId: number) => {
   }
   
   return null;
+});
+
+// Historie für ein einzelnes Pferd
+ipcMain.handle('pferde:history', (_event: any, pferdId: number) => {
+  const stmt = db.prepare(`
+    SELECT
+      termine.id as terminId,
+      termine.datum as datum,
+      termine.status as status,
+      termine.bemerkung as terminBemerkung,
+      hb.bearbeitung as bearbeitung,
+      hb.bemerkungen as bearbeitungsBemerkung
+    FROM termine
+    LEFT JOIN hufbearbeitungen hb ON hb.terminId = termine.id
+    WHERE termine.pferdId = ?
+      AND termine.typ = 'hufbearbeitung'
+      AND (termine.status = 'abgeschlossen' OR hb.id IS NOT NULL)
+    ORDER BY termine.datum DESC
+  `);
+  const rows = stmt.all(pferdId);
+  return mapHistorieMitIntervallen(rows);
+});
+
+// Historie für alle Pferde eines Kunden (gruppiert)
+ipcMain.handle('kunden:history', (_event: any, besitzerId: number) => {
+  const stmt = db.prepare(`
+    SELECT
+      pferde.id as pferdId,
+      pferde.name as pferdName,
+      termine.id as terminId,
+      termine.datum as datum,
+      termine.status as status,
+      termine.bemerkung as terminBemerkung,
+      hb.bearbeitung as bearbeitung,
+      hb.bemerkungen as bearbeitungsBemerkung
+    FROM pferde
+    LEFT JOIN termine ON termine.pferdId = pferde.id
+    LEFT JOIN hufbearbeitungen hb ON hb.terminId = termine.id
+    WHERE pferde.besitzerId = ?
+      AND termine.typ = 'hufbearbeitung'
+      AND (termine.status = 'abgeschlossen' OR hb.id IS NOT NULL)
+    ORDER BY pferde.name ASC, termine.datum DESC
+  `);
+  const rows = stmt.all(besitzerId);
+  return gruppiereKundenHistorie(rows);
 });
 
 // Alle Termine für Kalenderansicht

@@ -23,6 +23,25 @@ export interface Hufbearbeitung {
   bemerkungen: string;
 }
 
+export interface BearbeitungsHistorieEintrag {
+  terminId: number;
+  datum: string;
+  status: string;
+  terminBemerkung: string | null;
+  bearbeitung: string | null;
+  bearbeitungsBemerkung: string | null;
+  intervallTage: number | null;
+  intervallWochen: number | null;
+}
+
+export interface PferdHistorieGruppe {
+  pferdId: number;
+  pferdName: string;
+  eintraege: BearbeitungsHistorieEintrag[];
+  letzterTermin: string | null;
+  durchschnittIntervallWochen: number | null;
+}
+
 declare global {
   interface Window {
     api: {
@@ -35,6 +54,8 @@ declare global {
       updatePferd: (pferd: Pferd) => Promise<Pferd>;
       deletePferd: (id: number) => Promise<boolean>;
       getLastBearbeitung: (pferdId: number) => Promise<{datum: string, wochenSeither: number, status: string} | null>;
+      getPferdHistorie: (pferdId: number) => Promise<BearbeitungsHistorieEintrag[]>;
+      getKundenHistorie: (besitzerId: number) => Promise<PferdHistorieGruppe[]>;
       listTermine: (pferdId: number) => Promise<Termin[]>;
       addTermin: (termin: Omit<Termin, 'id'>) => Promise<Termin>;
       addMultipleTermine: (terminDaten: {pferdIds: number[], datum: string, ende?: string | null, bemerkung: string, titel?: string, status?: string}) => Promise<any[]>;

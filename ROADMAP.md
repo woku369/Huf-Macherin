@@ -223,7 +223,7 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 
 ### Phase 3: Pferde-Historie & Bearbeitungs-Übersicht
 
-- [ ] **PferdHistorie:** Alle Hufbearbeitungen eines Pferdes chronologisch anzeigen
+- [x] **PferdHistorie (Basis):** Chronologische Historie pro Pferd in der Kundenansicht (inkl. Intervallanzeige und Bemerkungen)
 - [ ] **Bearbeitungsnotizen** beim Termin im Tooltip anzeigen
 - [ ] **Österreichische Feiertage** im Kalender markieren
 - [ ] Kundenverwaltung: Pferde-Übersicht mit letzter Bearbeitungszeit
