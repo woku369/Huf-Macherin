@@ -1,6 +1,43 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const isDev = process.env.NODE_ENV === 'development' || !require('fs').existsSync(require('path').join(__dirname, 'dist', 'index.html'));
+const fs = require('fs');
+const startUrlArg = process.argv.find((arg) => typeof arg === 'string' && /^https?:\/\//.test(arg));
+const devServerUrl = startUrlArg || '';
+const isDev = Boolean(devServerUrl);
+
+function applyCsp() {
+  const prodCsp = [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+
+  const devCsp = [
+    "default-src 'self' http://localhost:5173 ws://localhost:5173",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:5173",
+    "style-src 'self' 'unsafe-inline' http://localhost:5173",
+    "img-src 'self' data: blob: http://localhost:5173",
+    "font-src 'self' data: http://localhost:5173",
+    "connect-src 'self' ws://localhost:5173 http://localhost:5173",
+    "object-src 'none'",
+    "base-uri 'self'",
+  ].join('; ');
+
+  const csp = isDev ? devCsp : prodCsp;
+
+  const filter = { urls: ['*://*/*', 'file://*/*'] };
+  require('electron').session.defaultSession.webRequest.onHeadersReceived(filter, (details, callback) => {
+    const responseHeaders = details.responseHeaders || {};
+    responseHeaders['Content-Security-Policy'] = [csp];
+    callback({ responseHeaders });
+  });
+}
 
 // Datenbank initialisieren
 const { initDb } = require('./dist/db.js');
@@ -26,9 +63,22 @@ function createWindow() {
   // In Development Mode: Vite Dev Server laden
   // In Production Mode: Gebaute Dateien laden
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.loadURL(devServerUrl);
   } else {
-    mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    // Guardrail: normalize asset paths for file:// launches (idempotent).
+    if (fs.existsSync(indexPath)) {
+      const html = fs.readFileSync(indexPath, 'utf8');
+      const normalized = html
+        .replace(/(["'])\.\.\/assets\//g, '$1./assets/')
+        .replace(/(["'])\.\.\/vite\.svg/g, '$1./vite.svg')
+        .replace(/(["'])\/assets\//g, '$1./assets/')
+        .replace(/(["'])\/vite\.svg/g, '$1./vite.svg');
+      if (normalized !== html) {
+        fs.writeFileSync(indexPath, normalized, 'utf8');
+      }
+    }
+    mainWindow.loadFile(indexPath);
   }
 
   // DevTools nur im Entwicklungsmodus öffnen
@@ -42,6 +92,7 @@ function createWindow() {
 }
 
 app.whenReady().then(createWindow);
+app.whenReady().then(applyCsp);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

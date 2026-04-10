@@ -10,12 +10,12 @@
     "build": "npm run build-backend && npm run build-frontend && npm run build-backend && npm run fix-html-paths",
     "build-main": "npm run build-backend",
     "build-all": "npm run build",
-    "fix-html-paths": "node -e \"const fs=require('fs'); const html=fs.readFileSync('dist/index.html','utf8').replace(/\\/assets\\//g,'./assets/').replace(/\\/vite.svg/g,'./vite.svg'); fs.writeFileSync('dist/index.html',html); console.log('HTML-Pfade korrigiert');\"",
+    "fix-html-paths": "node -e \"const fs=require('fs'); const p='dist/index.html'; if(!fs.existsSync(p)){console.log('dist/index.html fehlt'); process.exit(0);} const html=fs.readFileSync(p,'utf8'); const fixed=html.replace(/([\\\"'])\\.\\.\\/assets\\//g,'$1./assets/').replace(/([\\\"'])\\.\\.\\/vite\\.svg/g,'$1./vite.svg').replace(/([\\\"'])\\/assets\\//g,'$1./assets/').replace(/([\\\"'])\\/vite\\.svg/g,'$1./vite.svg'); fs.writeFileSync(p,fixed); console.log('HTML-Pfade korrigiert (idempotent)');\"",
     "start-electron": "npx electron .",
     "start": "npm run build-all && npm run start-electron",
     "lint": "eslint .",
     "preview": "vite preview",
-    "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\""
+    "electron": "concurrently \"npm run dev -- --port 5173 --strictPort\" \"wait-on http://localhost:5173 && electron . http://localhost:5173\""
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0",
@@ -23,6 +23,7 @@
     "googleapis": "^150.0.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
+    "lucide-react": "^1.8.0",
     "react": "^19.1.0",
     "react-big-calendar": "^1.19.4",
     "react-dom": "^19.1.0"

@@ -312,6 +312,7 @@ Folgende Skills wären hilfreich zu definieren / laden für zukünftige Arbeit:
 | Skill | Wofür |
 |-------|-------|
 | **Synology-Tailscale-Upload** (Gerüst vorhanden) | Phase 4: PWA, Kamera, File Station API, Tailscale – Zugangsdaten werden ergänzt |
+| **style-system-hufmacherin** (neu) | Einheitliche UI-Parameter fuer alle Unterseiten: Farben, Typografie, Komponenten, Icons, Konsistenzprozess |
 | **agent-customization** (vorhanden) | Copilot-Instruktionen, Skill-Dateien pflegen |
 | Performance-Profiling | Wenn Kalender mit vielen Terminen langsam wird |
 | Form-Validation | Für Phase 2/3 mit komplexeren Formularen |

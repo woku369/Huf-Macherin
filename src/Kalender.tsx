@@ -202,7 +202,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             onClick={() => onNavigate('PREV')}
             style={{ 
               padding: '8px 12px',
-              backgroundColor: '#3498db',
+              backgroundColor: '#5f7f86',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -215,7 +215,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             onClick={() => onNavigate('TODAY')}
             style={{ 
               padding: '8px 12px',
-              backgroundColor: '#2c3e50',
+              backgroundColor: '#2f3636',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -228,7 +228,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             onClick={() => onNavigate('NEXT')}
             style={{ 
               padding: '8px 12px',
-              backgroundColor: '#3498db',
+              backgroundColor: '#5f7f86',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -242,7 +242,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
         <div style={{ 
           fontSize: '18px', 
           fontWeight: 'bold',
-          color: '#2c3e50',
+          color: '#2f3636',
           display: 'flex',
           alignItems: 'center',
           gap: '15px'
@@ -251,10 +251,10 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
           {view === 'month' && (
             <span style={{ 
               fontSize: '14px', 
-              backgroundColor: '#e8f4fd',
+              backgroundColor: '#e7edea',
               padding: '4px 8px',
               borderRadius: '4px',
-              color: '#2980b9'
+              color: '#5f7f86'
             }}>
               KW {currentWeek}
             </span>
@@ -266,7 +266,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             onClick={() => onView('month')}
             style={{
               padding: '8px 12px',
-              backgroundColor: view === 'month' ? '#27ae60' : '#95a5a6',
+              backgroundColor: view === 'month' ? '#6c8a70' : '#8a8f8b',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -279,7 +279,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             onClick={() => onView('week')}
             style={{
               padding: '8px 12px',
-              backgroundColor: view === 'week' ? '#27ae60' : '#95a5a6',
+              backgroundColor: view === 'week' ? '#6c8a70' : '#8a8f8b',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -292,7 +292,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             onClick={() => onView('day')}
             style={{
               padding: '8px 12px',
-              backgroundColor: view === 'day' ? '#27ae60' : '#95a5a6',
+              backgroundColor: view === 'day' ? '#6c8a70' : '#8a8f8b',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -633,7 +633,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             onClick={handlePdfExport} 
             style={{ 
               padding: '10px 15px',
-              backgroundColor: '#e74c3c',
+              backgroundColor: '#a55d4e',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
@@ -666,7 +666,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               onClick={onTermineChange} 
               style={{ 
                 padding: '10px 15px',
-                backgroundColor: '#27ae60',
+                backgroundColor: '#6c8a70',
                 color: 'white',
                 border: 'none',
                 borderRadius: '5px',
@@ -683,21 +683,21 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
         
         {/* Termin-Status Legende */}
         <div style={{ display: 'flex', gap: '8px', fontSize: '12px', alignItems: 'center' }}>
-          <span style={{ color: '#7f8c8d', fontWeight: 'bold' }}>Status:</span>
+          <span style={{ color: '#737873', fontWeight: 'bold' }}>Status:</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#9b59b6', borderRadius: '2px' }}></div>
+            <div style={{ width: '12px', height: '12px', backgroundColor: '#8a7d90', borderRadius: '2px' }}></div>
             <span>Vorreserviert</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#3498db', borderRadius: '2px' }}></div>
+            <div style={{ width: '12px', height: '12px', backgroundColor: '#5f7f86', borderRadius: '2px' }}></div>
             <span>Bestätigt</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#27ae60', borderRadius: '2px' }}></div>
+            <div style={{ width: '12px', height: '12px', backgroundColor: '#6c8a70', borderRadius: '2px' }}></div>
             <span>Abgeschlossen</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#f39c12', borderRadius: '2px' }}></div>
+            <div style={{ width: '12px', height: '12px', backgroundColor: '#b39563', borderRadius: '2px' }}></div>
             <span>Vorschlag</span>
           </div>
         </div>
@@ -745,15 +745,15 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             const status = event.resource?.status;
             let bg: string;
             if (typ === 'eigener_termin') {
-              bg = '#c0392b';
+              bg = '#8b5e4e';
             } else if (typ === 'reitstunde') {
-              bg = status === 'abgeschlossen' ? '#d35400' : '#e67e22';
+              bg = status === 'abgeschlossen' ? '#8f6a46' : '#a67c52';
             } else {
               // hufbearbeitung
-              bg = status === 'abgeschlossen' ? '#27ae60' :
-                   status === 'vorschlag'     ? '#f39c12' :
-                   status === 'vorreserviert' ? '#9b59b6' :
-                   status === 'bestätigt'     ? '#3498db' : '#95a5a6';
+              bg = status === 'abgeschlossen' ? '#6c8a70' :
+                   status === 'vorschlag'     ? '#b39563' :
+                   status === 'vorreserviert' ? '#8a7d90' :
+                   status === 'bestätigt'     ? '#5f7f86' : '#8a8f8b';
             }
             return {
               style: {
@@ -776,7 +776,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             position: 'fixed',
             left: Math.max(10, Math.min(tooltipPosition.x - 150, window.innerWidth - 320)),
             top: Math.max(10, Math.min(tooltipPosition.y - 200, window.innerHeight - 400)),
-            backgroundColor: '#2c3e50',
+            backgroundColor: '#2f3636',
             color: 'white',
             borderRadius: '8px',
             padding: '15px',
@@ -784,7 +784,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             zIndex: 1000,
             width: '300px',
             fontSize: '14px',
-            border: '2px solid #34495e',
+            border: '2px solid #3d4746',
             maxHeight: '380px',
             overflow: 'auto'
           }}
@@ -804,9 +804,9 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                 <div style={{ 
                   fontWeight: 'bold', 
                   marginBottom: '12px', 
-                  color: '#ecf0f1',
+                  color: '#f1ece4',
                   fontSize: '16px',
-                  borderBottom: '1px solid #34495e',
+                  borderBottom: '1px solid #3d4746',
                   paddingBottom: '8px'
                 }}>
                   📅 {currentEvent.title}
@@ -816,19 +816,19 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
                     <span style={{ marginRight: '8px' }}>👤</span>
                     <strong>Kunde:</strong> 
-                    <span style={{ marginLeft: '8px', color: '#bdc3c7' }}>{details.kunde}</span>
+                    <span style={{ marginLeft: '8px', color: '#bcb4a8' }}>{details.kunde}</span>
                   </div>
                   
                   <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
                     <span style={{ marginRight: '8px' }}>🐴</span>
                     <strong>Pferd:</strong> 
-                    <span style={{ marginLeft: '8px', color: '#bdc3c7' }}>{details.pferd}</span>
+                    <span style={{ marginLeft: '8px', color: '#bcb4a8' }}>{details.pferd}</span>
                   </div>
                   
                   <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
                     <span style={{ marginRight: '8px' }}>🕒</span>
                     <strong>Zeit:</strong> 
-                    <span style={{ marginLeft: '8px', color: '#bdc3c7' }}>{details.datum}</span>
+                    <span style={{ marginLeft: '8px', color: '#bcb4a8' }}>{details.datum}</span>
                   </div>
                   
                   <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
@@ -839,10 +839,10 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       borderRadius: '12px', 
                       fontSize: '12px',
                       marginLeft: '8px',
-                      backgroundColor: details.status === 'abgeschlossen' ? '#27ae60' : 
-                                      details.status === 'vorschlag' ? '#f39c12' : 
-                                      details.status === 'vorreserviert' ? '#9b59b6' :
-                                      details.status === 'bestätigt' ? '#3498db' : '#95a5a6',
+                      backgroundColor: details.status === 'abgeschlossen' ? '#6c8a70' : 
+                                      details.status === 'vorschlag' ? '#b39563' : 
+                                      details.status === 'vorreserviert' ? '#8a7d90' :
+                                      details.status === 'bestätigt' ? '#5f7f86' : '#8a8f8b',
                       color: 'white',
                       fontWeight: 'bold'
                     }}>
@@ -858,11 +858,11 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     marginTop: '15px',
                     marginBottom: '12px', 
                     padding: '12px', 
-                    backgroundColor: '#34495e', 
+                    backgroundColor: '#3d4746', 
                     borderRadius: '6px',
-                    border: '2px solid #4a5f7a'
+                    border: '2px solid #55615f'
                   }}>
-                    <div style={{ fontSize: '13px', marginBottom: '10px', color: '#ecf0f1', fontWeight: 'bold' }}>
+                    <div style={{ fontSize: '13px', marginBottom: '10px', color: '#f1ece4', fontWeight: 'bold' }}>
                       🔄 Status ändern:
                     </div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -871,7 +871,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                         style={{
                           padding: '6px 10px',
                           fontSize: '11px',
-                          backgroundColor: details.status === 'vorreserviert' ? '#7f8c8d' : '#9b59b6',
+                          backgroundColor: details.status === 'vorreserviert' ? '#737873' : '#8a7d90',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -887,7 +887,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                         style={{
                           padding: '6px 10px',
                           fontSize: '11px',
-                          backgroundColor: details.status === 'bestätigt' ? '#7f8c8d' : '#3498db',
+                          backgroundColor: details.status === 'bestätigt' ? '#737873' : '#5f7f86',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -903,7 +903,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                         style={{
                           padding: '6px 10px',
                           fontSize: '11px',
-                          backgroundColor: details.status === 'abgeschlossen' ? '#7f8c8d' : '#27ae60',
+                          backgroundColor: details.status === 'abgeschlossen' ? '#737873' : '#6c8a70',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -919,7 +919,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                         style={{
                           padding: '6px 10px',
                           fontSize: '11px',
-                          backgroundColor: details.status === 'vorschlag' ? '#7f8c8d' : '#f39c12',
+                          backgroundColor: details.status === 'vorschlag' ? '#737873' : '#b39563',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -937,11 +937,11 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     <div style={{ 
                       marginTop: '12px', 
                       fontSize: '13px', 
-                      color: '#bdc3c7',
-                      backgroundColor: '#34495e',
+                      color: '#bcb4a8',
+                      backgroundColor: '#3d4746',
                       padding: '8px',
                       borderRadius: '4px',
-                      border: '1px solid #4a5f7a'
+                      border: '1px solid #55615f'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
                         <span style={{ marginRight: '6px' }}>💭</span>
@@ -963,7 +963,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     height: 0,
                     borderLeft: '8px solid transparent',
                     borderRight: '8px solid transparent',
-                    borderTop: '8px solid #2c3e50'
+                    borderTop: '8px solid #2f3636'
                   }}
                 />
               </>
@@ -1005,7 +1005,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ 
                 margin: '0 0 8px 0', 
-                color: '#2c3e50', 
+                color: '#2f3636', 
                 fontSize: '20px',
                 fontWeight: 'bold'
               }}>
@@ -1013,7 +1013,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               </h3>
               <p style={{ 
                 margin: 0, 
-                color: '#7f8c8d', 
+                color: '#737873', 
                 fontSize: '14px' 
               }}>
                 Datum: {format(selectedDate, 'dd.MM.yyyy', { locale: de })}
@@ -1024,14 +1024,14 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
 
               {/* Termin-Typ Auswahl */}
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#2c3e50', fontSize: '14px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>
                   Termintyp *
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                   {([
-                    { value: 'hufbearbeitung', label: '🐴 Hufbearbeitung', color: '#8e44ad' },
-                    { value: 'reitstunde', label: '🏇 Reitstunde', color: '#e67e22' },
-                    { value: 'eigener_termin', label: '🔴 Eigener Termin', color: '#c0392b' },
+                    { value: 'hufbearbeitung', label: '🐴 Hufbearbeitung', color: '#8a7d90' },
+                    { value: 'reitstunde', label: '🏇 Reitstunde', color: '#a67c52' },
+                    { value: 'eigener_termin', label: '🔴 Eigener Termin', color: '#8b5e4e' },
                   ] as const).map(({ value, label, color }) => (
                     <button
                       key={value}
@@ -1060,7 +1060,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   display: 'block', 
                   marginBottom: '6px', 
                   fontWeight: 'bold',
-                  color: '#2c3e50',
+                  color: '#2f3636',
                   fontSize: '14px'
                 }}>
                   {createFormData.typ === 'eigener_termin' ? 'Titel *' : 'Titel (optional)'}
@@ -1080,7 +1080,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     transition: 'border-color 0.2s',
                     boxSizing: 'border-box'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                  onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
@@ -1091,7 +1091,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     display: 'block', 
                     marginBottom: '6px', 
                     fontWeight: 'bold',
-                    color: '#2c3e50',
+                    color: '#2f3636',
                     fontSize: '14px'
                   }}>
                     Startzeit
@@ -1110,7 +1110,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       boxSizing: 'border-box',
                       backgroundColor: 'white'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                    onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   >
                     {timeOptions.map(time => (
@@ -1124,7 +1124,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     display: 'block', 
                     marginBottom: '6px', 
                     fontWeight: 'bold',
-                    color: '#2c3e50',
+                    color: '#2f3636',
                     fontSize: '14px'
                   }}>
                     Endzeit (optional)
@@ -1143,7 +1143,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       boxSizing: 'border-box',
                       backgroundColor: 'white'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                    onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   >
                     <option value="">-- Keine Endzeit --</option>
@@ -1161,7 +1161,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   display: 'block', 
                   marginBottom: '6px', 
                   fontWeight: 'bold',
-                  color: '#2c3e50',
+                  color: '#2f3636',
                   fontSize: '14px'
                 }}>
                   Kunde *
@@ -1181,7 +1181,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       boxSizing: 'border-box',
                       backgroundColor: 'white'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                    onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   >
                     <option value="">-- Kunde auswählen --</option>
@@ -1196,7 +1196,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     onClick={() => setShowKundeForm(true)}
                     style={{
                       padding: '8px 12px',
-                      backgroundColor: '#3498db',
+                      backgroundColor: '#5f7f86',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
@@ -1219,7 +1219,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     display: 'block', 
                     marginBottom: '6px', 
                     fontWeight: 'bold',
-                    color: '#2c3e50',
+                    color: '#2f3636',
                     fontSize: '14px'
                   }}>
                     Pferde auswählen * ({createFormData.ausgewaehltePferde.length} ausgewählt)
@@ -1228,7 +1228,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   {verfuegbarePferde.length === 0 ? (
                     <div style={{
                       padding: '12px',
-                      backgroundColor: '#f8f9fa',
+                      backgroundColor: '#f7f3ec',
                       border: '2px solid #e1e8ed',
                       borderRadius: '6px',
                       color: '#6c757d',
@@ -1255,7 +1255,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                               padding: '10px',
                               borderBottom: '1px solid #e1e8ed',
                               cursor: 'pointer',
-                              backgroundColor: isSelected ? '#e8f4fd' : 'white',
+                              backgroundColor: isSelected ? '#e7edea' : 'white',
                               transition: 'background-color 0.2s'
                             }}
                             onClick={() => {
@@ -1273,19 +1273,19 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                                 style={{ cursor: 'pointer' }}
                               />
                               <div style={{ flexGrow: 1 }}>
-                                <div style={{ fontWeight: 'bold', color: '#2c3e50' }}>
+                                <div style={{ fontWeight: 'bold', color: '#2f3636' }}>
                                   🐴 {pferd.name}
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                                <div style={{ fontSize: '12px', color: '#737873' }}>
                                   {pferd.alterJahre} Jahre, {pferd.geschlecht}
                                   {details?.lastBearbeitung && (
-                                    <span style={{ marginLeft: '8px', color: '#e74c3c' }}>
+                                    <span style={{ marginLeft: '8px', color: '#a55d4e' }}>
                                       • Letzte Bearbeitung vor {details.lastBearbeitung.wochenSeither} Wochen
                                     </span>
                                   )}
                                 </div>
                                 {pferd.bemerkungen && (
-                                  <div style={{ fontSize: '11px', color: '#95a5a6', marginTop: '2px' }}>
+                                  <div style={{ fontSize: '11px', color: '#8a8f8b', marginTop: '2px' }}>
                                     {pferd.bemerkungen}
                                   </div>
                                 )}
@@ -1305,7 +1305,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       style={{
                         marginTop: '10px',
                         padding: '8px 12px',
-                        backgroundColor: '#3498db',
+                        backgroundColor: '#5f7f86',
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',
@@ -1327,7 +1327,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   display: 'block', 
                   marginBottom: '6px', 
                   fontWeight: 'bold',
-                  color: '#2c3e50',
+                  color: '#2f3636',
                   fontSize: '14px'
                 }}>
                   Bemerkung
@@ -1349,7 +1349,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     resize: 'vertical',
                     fontFamily: 'inherit'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                  onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
@@ -1365,7 +1365,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   onClick={() => setShowCreateForm(false)}
                   style={{
                     padding: '10px 20px',
-                    backgroundColor: '#95a5a6',
+                    backgroundColor: '#8a8f8b',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -1374,8 +1374,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     fontWeight: 'bold',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7f8c8d'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#95a5a6'}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#737873'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8a8f8b'}
                 >
                   Abbrechen
                 </button>
@@ -1384,7 +1384,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   onClick={handleCreateTermin}
                   style={{
                     padding: '10px 20px',
-                    backgroundColor: '#27ae60',
+                    backgroundColor: '#6c8a70',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -1393,8 +1393,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     fontWeight: 'bold',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#229954'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#27ae60'}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#5d7863'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6c8a70'}
                 >
                   💾 Termin erstellen
                 </button>
@@ -1449,7 +1449,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ 
                 margin: '0 0 8px 0', 
-                color: '#2c3e50', 
+                color: '#2f3636', 
                 fontSize: '20px',
                 fontWeight: 'bold'
               }}>
@@ -1457,14 +1457,14 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               </h3>
               <p style={{ 
                 margin: 0, 
-                color: '#7f8c8d', 
+                color: '#737873', 
                 fontSize: '14px' 
               }}>
                 Kunde: {editingTermin.besitzerName} {editingTermin.besitzerVorname} • Pferd: {editingTermin.pferdName}
               </p>
               <p style={{ 
                 margin: '4px 0 0 0', 
-                color: '#7f8c8d', 
+                color: '#737873', 
                 fontSize: '14px' 
               }}>
                 Termin: {format(new Date(editingTermin.datum), 'dd.MM.yyyy HH:mm', { locale: de })}
@@ -1477,7 +1477,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   display: 'block', 
                   marginBottom: '6px', 
                   fontWeight: 'bold',
-                  color: '#2c3e50',
+                  color: '#2f3636',
                   fontSize: '14px'
                 }}>
                   Bearbeitungsnotizen
@@ -1499,7 +1499,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     resize: 'vertical',
                     fontFamily: 'inherit'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                  onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
@@ -1509,7 +1509,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   display: 'block', 
                   marginBottom: '6px', 
                   fontWeight: 'bold',
-                  color: '#2c3e50',
+                  color: '#2f3636',
                   fontSize: '14px'
                 }}>
                   Nächster Termin empfohlen in
@@ -1528,7 +1528,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     boxSizing: 'border-box',
                     backgroundColor: 'white'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                  onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 >
                   <option value="4">4 Wochen (Standard)</option>
@@ -1558,7 +1558,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   }}
                   style={{
                     padding: '10px 20px',
-                    backgroundColor: '#95a5a6',
+                    backgroundColor: '#8a8f8b',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -1567,8 +1567,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     fontWeight: 'bold',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7f8c8d'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#95a5a6'}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#737873'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8a8f8b'}
                 >
                   Abbrechen
                 </button>
@@ -1621,7 +1621,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   }}
                   style={{
                     padding: '10px 20px',
-                    backgroundColor: '#27ae60',
+                    backgroundColor: '#6c8a70',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -1630,8 +1630,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     fontWeight: 'bold',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#229954'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#27ae60'}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#5d7863'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6c8a70'}
                 >
                   💾 Bearbeitung speichern
                 </button>
@@ -1641,7 +1641,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             <div style={{ 
               marginTop: '16px', 
               padding: '12px', 
-              backgroundColor: '#d4edda', 
+              backgroundColor: '#e6ece4', 
               border: '1px solid #c3e6cb',
               borderRadius: '6px',
               fontSize: '12px',
@@ -1684,46 +1684,46 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ margin: '0 0 8px 0', color: '#2c3e50', fontSize: '20px', fontWeight: 'bold' }}>
+              <h3 style={{ margin: '0 0 8px 0', color: '#2f3636', fontSize: '20px', fontWeight: 'bold' }}>
                 👤 Neuen Kunden anlegen
               </h3>
             </div>
             <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2c3e50', fontSize: '14px' }}>Nachname *</label>
+                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Nachname *</label>
                   <input
                     type="text"
                     value={kundeFormData.name}
                     onChange={(e) => setKundeFormData({...kundeFormData, name: e.target.value})}
                     placeholder="z.B. Müller"
                     style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
-                    onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                    onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2c3e50', fontSize: '14px' }}>Vorname</label>
+                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Vorname</label>
                   <input
                     type="text"
                     value={kundeFormData.vorname}
                     onChange={(e) => setKundeFormData({...kundeFormData, vorname: e.target.value})}
                     placeholder="z.B. Anna"
                     style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
-                    onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                    onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   />
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2c3e50', fontSize: '14px' }}>Adresse</label>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Adresse</label>
                 <input
                   type="text"
                   value={kundeFormData.adresse}
                   onChange={(e) => setKundeFormData({...kundeFormData, adresse: e.target.value})}
                   placeholder="z.B. Hauptstraße 5, 4020 Linz"
                   style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
-                  onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                  onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
@@ -1731,14 +1731,14 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                 <button
                   type="button"
                   onClick={() => setShowKundeForm(false)}
-                  style={{ padding: '10px 20px', backgroundColor: '#95a5a6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                  style={{ padding: '10px 20px', backgroundColor: '#8a8f8b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
                 >
                   Abbrechen
                 </button>
                 <button
                   type="button"
                   onClick={handleCreateKunde}
-                  style={{ padding: '10px 20px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                  style={{ padding: '10px 20px', backgroundColor: '#5f7f86', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
                 >
                   👤 Kunden anlegen
                 </button>
@@ -1781,7 +1781,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ 
                 margin: '0 0 8px 0', 
-                color: '#2c3e50', 
+                color: '#2f3636', 
                 fontSize: '20px',
                 fontWeight: 'bold'
               }}>
@@ -1789,7 +1789,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               </h3>
               <p style={{ 
                 margin: 0, 
-                color: '#7f8c8d', 
+                color: '#737873', 
                 fontSize: '14px' 
               }}>
                 Für: {kunden.find((k: any) => k.id === parseInt(createFormData.kundeId))?.name || 'Unbekannt'}
@@ -1802,7 +1802,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   display: 'block', 
                   marginBottom: '6px', 
                   fontWeight: 'bold',
-                  color: '#2c3e50',
+                  color: '#2f3636',
                   fontSize: '14px'
                 }}>
                   Name des Pferdes *
@@ -1823,7 +1823,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     transition: 'border-color 0.2s',
                     boxSizing: 'border-box'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                  onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
@@ -1834,7 +1834,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     display: 'block', 
                     marginBottom: '6px', 
                     fontWeight: 'bold',
-                    color: '#2c3e50',
+                    color: '#2f3636',
                     fontSize: '14px'
                   }}>
                     Geburtsjahr
@@ -1856,7 +1856,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       transition: 'border-color 0.2s',
                       boxSizing: 'border-box'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                    onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   />
                 </div>
@@ -1866,7 +1866,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     display: 'block', 
                     marginBottom: '6px', 
                     fontWeight: 'bold',
-                    color: '#2c3e50',
+                    color: '#2f3636',
                     fontSize: '14px'
                   }}>
                     Geschlecht
@@ -1885,7 +1885,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       boxSizing: 'border-box',
                       backgroundColor: 'white'
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                    onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   >
                     <option value="Stute">Stute</option>
@@ -1900,7 +1900,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   display: 'block', 
                   marginBottom: '6px', 
                   fontWeight: 'bold',
-                  color: '#2c3e50',
+                  color: '#2f3636',
                   fontSize: '14px'
                 }}>
                   Bemerkungen
@@ -1922,7 +1922,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     resize: 'vertical',
                     fontFamily: 'inherit'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#3498db'}
+                  onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
@@ -1938,7 +1938,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   onClick={() => setShowPferdForm(false)}
                   style={{
                     padding: '10px 20px',
-                    backgroundColor: '#95a5a6',
+                    backgroundColor: '#8a8f8b',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -1947,8 +1947,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     fontWeight: 'bold',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#7f8c8d'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#95a5a6'}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#737873'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8a8f8b'}
                 >
                   Abbrechen
                 </button>
@@ -1957,7 +1957,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   onClick={handleCreatePferd}
                   style={{
                     padding: '10px 20px',
-                    backgroundColor: '#27ae60',
+                    backgroundColor: '#6c8a70',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -1966,8 +1966,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     fontWeight: 'bold',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#229954'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#27ae60'}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#5d7863'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6c8a70'}
                 >
                   🐴 Pferd anlegen
                 </button>

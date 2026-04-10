@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { BookOpen, CalendarDays, Camera, ReceiptText, Settings, Users } from 'lucide-react';
 import './App.css';
 import PferdeListe from './PferdeListe';
 import TerminVerwaltung from './TerminVerwaltung';
@@ -11,6 +12,24 @@ interface Kunde {
   adresse: string;
 }
 
+type ThemeSettings = {
+  bgPage: string;
+  bgMain: string;
+  bgSidebar: string;
+  accent: string;
+  ok: string;
+  danger: string;
+};
+
+const DEFAULT_THEME: ThemeSettings = {
+  bgPage: '#f4f1ea',
+  bgMain: '#f8f6f2',
+  bgSidebar: '#232b2b',
+  accent: '#4d6a62',
+  ok: '#56755f',
+  danger: '#a55d4e',
+};
+
 function App() {
   const [kunden, setKunden] = useState<Kunde[]>([]);
   const [name, setName] = useState('');
@@ -19,6 +38,9 @@ function App() {
   const [selectedKunde, setSelectedKunde] = useState<Kunde | null>(null);
   const [alleTermine, setAlleTermine] = useState<any[]>([]);
   const [activeView, setActiveView] = useState<'kalender' | 'kunden' | 'anleitungen' | 'einstellungen'>('kalender');
+  const [logoDataUrl, setLogoDataUrl] = useState('');
+  const [theme, setTheme] = useState<ThemeSettings>(DEFAULT_THEME);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
   
   // Bearbeitungsmodus
   const [editingKunde, setEditingKunde] = useState<Kunde | null>(null);
@@ -34,6 +56,35 @@ function App() {
     // Alle Termine für Kalender laden
     window.api.listAlleTermine && window.api.listAlleTermine().then(setAlleTermine);
   }, []);
+
+  useEffect(() => {
+    const savedLogo = localStorage.getItem('hufmacherinLogo');
+    if (savedLogo) {
+      setLogoDataUrl(savedLogo);
+    }
+  }, []);
+
+  useEffect(() => {
+    const savedThemeRaw = localStorage.getItem('hufmacherinTheme');
+    if (savedThemeRaw) {
+      try {
+        const savedTheme = JSON.parse(savedThemeRaw) as Partial<ThemeSettings>;
+        setTheme({ ...DEFAULT_THEME, ...savedTheme });
+      } catch {
+        setTheme(DEFAULT_THEME);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--bg-page', theme.bgPage);
+    root.style.setProperty('--bg-main', theme.bgMain);
+    root.style.setProperty('--bg-sidebar', theme.bgSidebar);
+    root.style.setProperty('--accent', theme.accent);
+    root.style.setProperty('--ok', theme.ok);
+    root.style.setProperty('--danger', theme.danger);
+  }, [theme]);
 
   const addKunde = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,6 +140,45 @@ function App() {
     }
   };
 
+  const handleLogoPick = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Bitte eine Bilddatei wählen (PNG/JPG/WebP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        setLogoDataUrl(result);
+        localStorage.setItem('hufmacherinLogo', result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearLogo = () => {
+    setLogoDataUrl('');
+    localStorage.removeItem('hufmacherinLogo');
+    if (logoInputRef.current) {
+      logoInputRef.current.value = '';
+    }
+  };
+
+  const updateThemeColor = (key: keyof ThemeSettings, value: string) => {
+    setTheme((prev) => {
+      const next = { ...prev, [key]: value };
+      localStorage.setItem('hufmacherinTheme', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const resetTheme = () => {
+    setTheme(DEFAULT_THEME);
+    localStorage.setItem('hufmacherinTheme', JSON.stringify(DEFAULT_THEME));
+  };
+
   const viewTitle: Record<'kalender' | 'kunden' | 'anleitungen' | 'einstellungen', { title: string; subtitle: string }> = {
     kalender: {
       title: 'Terminkalender',
@@ -112,10 +202,37 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand-block">
-          <div className="logo-slot">Logo</div>
+          <div className="logo-slot">
+            {logoDataUrl ? (
+              <img src={logoDataUrl} alt="Logo" className="logo-image" />
+            ) : (
+              <span>Logo</span>
+            )}
+          </div>
           <div>
             <div className="brand-title">Die Huf-Macherin</div>
             <div className="brand-subtitle">Kunden, Pferde, Termine</div>
+            <div className="logo-actions">
+              <input
+                ref={logoInputRef}
+                className="logo-file-input"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                onChange={handleLogoPick}
+              />
+              <button
+                type="button"
+                className="logo-btn"
+                onClick={() => logoInputRef.current?.click()}
+              >
+                Logo wählen
+              </button>
+              {logoDataUrl && (
+                <button type="button" className="logo-btn ghost" onClick={clearLogo}>
+                  Entfernen
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -125,14 +242,14 @@ function App() {
             className={`nav-item ${activeView === 'kalender' ? 'active' : ''}`}
             onClick={() => setActiveView('kalender')}
           >
-            <span>📅</span>
+            <CalendarDays size={16} />
             <span>Kalender</span>
           </button>
           <button
             className={`nav-item ${activeView === 'kunden' ? 'active' : ''}`}
             onClick={() => setActiveView('kunden')}
           >
-            <span>👥</span>
+            <Users size={16} />
             <span>Kundenverwaltung</span>
           </button>
         </div>
@@ -140,11 +257,11 @@ function App() {
         <div className="nav-section">
           <div className="nav-title">Erweiterungen</div>
           <button className="nav-item placeholder" type="button">
-            <span>🖼️</span>
+            <Camera size={16} />
             <span>Foto-Dokumentation (bald)</span>
           </button>
           <button className="nav-item placeholder" type="button">
-            <span>🧾</span>
+            <ReceiptText size={16} />
             <span>Rechnungen (bald)</span>
           </button>
         </div>
@@ -155,7 +272,7 @@ function App() {
             className={`nav-item ${activeView === 'anleitungen' ? 'active' : ''}`}
             onClick={() => setActiveView('anleitungen')}
           >
-            <span>📘</span>
+            <BookOpen size={16} />
             <span>Anleitungen</span>
           </button>
         </div>
@@ -185,7 +302,7 @@ function App() {
           onClick={() => setActiveView('einstellungen')}
           type="button"
         >
-          <span>⚙️</span>
+          <Settings size={16} />
           <span>Einstellungen</span>
         </button>
       </aside>
@@ -299,15 +416,73 @@ function App() {
           {activeView === 'anleitungen' && (
             <div className="content-stack">
               <div className="panel">
-                <h3>Schnellstart</h3>
-                <p>1. Kalender öffnen und Termin anlegen.</p>
-                <p>2. Beim Kunden Pferde auswählen und Zeit setzen.</p>
-                <p>3. Terminstatus von vorreserviert auf bestätigt und danach auf abgeschlossen setzen.</p>
+                <h3>Schnellstart: Termin in 60 Sekunden</h3>
+                <ol className="guide-list">
+                  <li>Kalender öffnen und Datum anklicken.</li>
+                  <li>Kunde auswählen und Pferd(e) markieren.</li>
+                  <li>Zeit setzen und Termin als vorreserviert speichern.</li>
+                  <li>Später Status auf bestätigt setzen.</li>
+                  <li>Nach der Bearbeitung abschließen und Folgetermin-Wochen wählen.</li>
+                </ol>
               </div>
+
+              <div className="panel">
+                <h3>Bereits verfügbar</h3>
+                <div className="feature-grid">
+                  <div className="feature-item done">
+                    <span className="feature-state">Live</span>
+                    <strong>Status-Workflow</strong>
+                    <p>Vorreserviert → bestätigt → abgeschlossen inklusive Dokumentationsdialog.</p>
+                  </div>
+                  <div className="feature-item done">
+                    <span className="feature-state">Live</span>
+                    <strong>Neuer Kunde im Termin-Dialog</strong>
+                    <p>Kunde direkt im Terminprozess anlegen über + Neu.</p>
+                  </div>
+                  <div className="feature-item done">
+                    <span className="feature-state">Live</span>
+                    <strong>Termin-Typen</strong>
+                    <p>Hufbearbeitung, Reitstunde und eigener Termin mit passender Darstellung.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="panel">
+                <h3>Geplant / Platzhalter laut Roadmap</h3>
+                <div className="feature-grid">
+                  <div className="feature-item planned">
+                    <span className="feature-state">Geplant</span>
+                    <strong>Foto-Dokumentation (PWA + Synology)</strong>
+                    <p>Upload vom Android-Handy auf NAS, spätere Zuordnung und Galerie am PC.</p>
+                  </div>
+                  <div className="feature-item planned">
+                    <span className="feature-state">Geplant</span>
+                    <strong>Google Calendar Vollintegration</strong>
+                    <p>OAuth2, Typ-basierte Kalender, Vermeidung von Doppel-Exporten.</p>
+                  </div>
+                  <div className="feature-item planned">
+                    <span className="feature-state">Geplant</span>
+                    <strong>Rechnungswesen</strong>
+                    <p>Rechnung pro Termin, PDF-Erstellung und Export für Buchhaltung.</p>
+                  </div>
+                  <div className="feature-item planned">
+                    <span className="feature-state">Geplant</span>
+                    <strong>WhatsApp-Unterstützung</strong>
+                    <p>Später: Termin-/Fotoversand teilautomatisiert aus der App.</p>
+                  </div>
+                  <div className="feature-item planned">
+                    <span className="feature-state">Geplant</span>
+                    <strong>Feiertage und Historie</strong>
+                    <p>AT-Feiertage im Kalender und chronologische Pferde-Historie.</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="panel">
                 <h3>Häufige Fragen</h3>
                 <p><strong>Wie erstelle ich einen Folgetermin?</strong><br />Beim Abschließen eines Termins im Dokumentationsdialog die Wochen auswählen und speichern.</p>
                 <p><strong>Wie lege ich schnell einen neuen Kunden an?</strong><br />Im Termin-Dialog beim Feld Kunde auf + Neu klicken.</p>
+                <p><strong>Wo finde ich spätere Funktionen?</strong><br />Links in der Sidebar unter „Erweiterungen" sowie hier in den Platzhaltern.</p>
               </div>
             </div>
           )}
@@ -317,6 +492,40 @@ function App() {
               <div className="panel">
                 <h3>App-Einstellungen</h3>
                 <p>Hier können später Farbschema, Standardintervalle und Integrationen konfiguriert werden.</p>
+              </div>
+
+              <div className="panel">
+                <h3>Theme-Basis (Cattlework)</h3>
+                <p className="settings-note">Diese Farben gelten als Grundparameter für neue Unterseiten und bleiben lokal auf diesem Gerät gespeichert.</p>
+                <div className="theme-grid">
+                  <label className="theme-row">
+                    <span>Hintergrund Seite</span>
+                    <input type="color" value={theme.bgPage} onChange={(e) => updateThemeColor('bgPage', e.target.value)} />
+                  </label>
+                  <label className="theme-row">
+                    <span>Hintergrund Inhalt</span>
+                    <input type="color" value={theme.bgMain} onChange={(e) => updateThemeColor('bgMain', e.target.value)} />
+                  </label>
+                  <label className="theme-row">
+                    <span>Sidebar</span>
+                    <input type="color" value={theme.bgSidebar} onChange={(e) => updateThemeColor('bgSidebar', e.target.value)} />
+                  </label>
+                  <label className="theme-row">
+                    <span>Akzent</span>
+                    <input type="color" value={theme.accent} onChange={(e) => updateThemeColor('accent', e.target.value)} />
+                  </label>
+                  <label className="theme-row">
+                    <span>Erfolg</span>
+                    <input type="color" value={theme.ok} onChange={(e) => updateThemeColor('ok', e.target.value)} />
+                  </label>
+                  <label className="theme-row">
+                    <span>Warnung/Löschen</span>
+                    <input type="color" value={theme.danger} onChange={(e) => updateThemeColor('danger', e.target.value)} />
+                  </label>
+                </div>
+                <div className="theme-actions">
+                  <button className="btn btn-muted" type="button" onClick={resetTheme}>Standard wiederherstellen</button>
+                </div>
               </div>
             </div>
           )}
