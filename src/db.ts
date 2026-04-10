@@ -49,6 +49,40 @@ function initDb() {
       FOREIGN KEY (terminId) REFERENCES termine(id)
     );
   `);
+
+  // Migration: alte hufbearbeitungen-Schemata auf neues Format bringen.
+  try {
+    const hufCols = db.prepare(`PRAGMA table_info(hufbearbeitungen)`).all() as Array<{ name: string }>;
+    const colNames = hufCols.map(c => c.name);
+    const hasTerminId = colNames.includes('terminId');
+
+    if (!hasTerminId) {
+      const terminExpr = colNames.includes('termin_id') ? 'termin_id' : 'NULL';
+      const datumExpr = colNames.includes('datum') ? 'datum' : (colNames.includes('date') ? 'date' : 'CURRENT_TIMESTAMP');
+      const bearbeitungExpr = colNames.includes('bearbeitung') ? 'bearbeitung' : (colNames.includes('typ') ? 'typ' : "''");
+      const bemerkungenExpr = colNames.includes('bemerkungen') ? 'bemerkungen' : (colNames.includes('bemerkung') ? 'bemerkung' : 'NULL');
+
+      db.exec(`ALTER TABLE hufbearbeitungen RENAME TO hufbearbeitungen_old;`);
+      db.exec(`
+        CREATE TABLE hufbearbeitungen (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          terminId INTEGER,
+          datum TEXT,
+          bearbeitung TEXT,
+          bemerkungen TEXT,
+          FOREIGN KEY (terminId) REFERENCES termine(id)
+        );
+      `);
+      db.exec(`
+        INSERT INTO hufbearbeitungen (terminId, datum, bearbeitung, bemerkungen)
+        SELECT ${terminExpr}, ${datumExpr}, ${bearbeitungExpr}, ${bemerkungenExpr}
+        FROM hufbearbeitungen_old;
+      `);
+      db.exec(`DROP TABLE hufbearbeitungen_old;`);
+    }
+  } catch (e) {
+    // Falls keine Migration möglich ist, bleibt das bestehende Schema erhalten.
+  }
   
   // Fehlende Spalten hinzufügen (für bestehende Datenbanken)
   try {
@@ -96,6 +130,22 @@ function initDb() {
 
 // Hufbearbeitung-Funktionen
 function addHufbearbeitung(bearbeitung: any) {
+  if (!bearbeitung || !bearbeitung.terminId) {
+    throw new Error('Ungültige Bearbeitungsdaten: terminId fehlt.');
+  }
+
+  // Sicherheitsnetz für Alt-Datenbanken: Tabelle bei Bedarf erneut sicherstellen.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS hufbearbeitungen (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      terminId INTEGER,
+      datum TEXT,
+      bearbeitung TEXT,
+      bemerkungen TEXT,
+      FOREIGN KEY (terminId) REFERENCES termine(id)
+    );
+  `);
+
   const stmt = db.prepare(`
     INSERT INTO hufbearbeitungen (terminId, datum, bearbeitung, bemerkungen)
     VALUES (?, ?, ?, ?)

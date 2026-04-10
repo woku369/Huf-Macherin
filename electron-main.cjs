@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === 'development' || !require('fs').existsSync(require('path').join(__dirname, 'dist', 'index.html'));
 
 // Datenbank initialisieren
 const { initDb } = require('./dist/db.js');

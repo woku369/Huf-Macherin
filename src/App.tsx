@@ -18,7 +18,7 @@ function App() {
   const [adresse, setAdresse] = useState('');
   const [selectedKunde, setSelectedKunde] = useState<Kunde | null>(null);
   const [alleTermine, setAlleTermine] = useState<any[]>([]);
-  const [activeView, setActiveView] = useState<'kalender' | 'kunden'>('kalender');
+  const [activeView, setActiveView] = useState<'kalender' | 'kunden' | 'anleitungen' | 'einstellungen'>('kalender');
   
   // Bearbeitungsmodus
   const [editingKunde, setEditingKunde] = useState<Kunde | null>(null);
@@ -89,281 +89,239 @@ function App() {
     }
   };
 
+  const viewTitle: Record<'kalender' | 'kunden' | 'anleitungen' | 'einstellungen', { title: string; subtitle: string }> = {
+    kalender: {
+      title: 'Terminkalender',
+      subtitle: 'Planung, Statuswechsel und Abschluss der Termine'
+    },
+    kunden: {
+      title: 'Kundenverwaltung',
+      subtitle: 'Kunden, Pferde und Termine zentral verwalten'
+    },
+    anleitungen: {
+      title: 'Anleitungen',
+      subtitle: 'Schnelle Hilfe für die wichtigsten Abläufe'
+    },
+    einstellungen: {
+      title: 'Einstellungen',
+      subtitle: 'App-Verhalten, Kategorien und zukünftige Optionen'
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      {/* Sidebar */}
-      <div style={{ 
-        width: '300px', 
-        backgroundColor: '#f5f5f5', 
-        borderRight: '1px solid #ddd',
-        overflowY: 'auto',
-        padding: '20px'
-      }}>
-        <h1 style={{ marginTop: 0, color: '#2c3e50', fontSize: '24px' }}>Die Huf-Macherin</h1>
-        
-        {/* Navigation */}
-        <div style={{ marginBottom: '30px' }}>
-          <button 
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand-block">
+          <div className="logo-slot">Logo</div>
+          <div>
+            <div className="brand-title">Die Huf-Macherin</div>
+            <div className="brand-subtitle">Kunden, Pferde, Termine</div>
+          </div>
+        </div>
+
+        <div className="nav-section">
+          <div className="nav-title">Arbeitsbereich</div>
+          <button
+            className={`nav-item ${activeView === 'kalender' ? 'active' : ''}`}
             onClick={() => setActiveView('kalender')}
-            style={{ 
-              display: 'block',
-              width: '100%',
-              margin: '5px 0',
-              padding: '10px',
-              backgroundColor: activeView === 'kalender' ? '#3498db' : '#ecf0f1',
-              color: activeView === 'kalender' ? 'white' : '#2c3e50',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
           >
-            📅 Kalender
+            <span>📅</span>
+            <span>Kalender</span>
           </button>
-          <button 
+          <button
+            className={`nav-item ${activeView === 'kunden' ? 'active' : ''}`}
             onClick={() => setActiveView('kunden')}
-            style={{ 
-              display: 'block',
-              width: '100%',
-              margin: '5px 0',
-              padding: '10px',
-              backgroundColor: activeView === 'kunden' ? '#3498db' : '#ecf0f1',
-              color: activeView === 'kunden' ? 'white' : '#2c3e50',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
           >
-            👥 Kundenverwaltung
+            <span>👥</span>
+            <span>Kundenverwaltung</span>
           </button>
         </div>
 
-        {/* Kunden-Quick-Liste */}
-        <div>
-          <h3 style={{ color: '#34495e', marginBottom: '15px' }}>Kunden</h3>
-          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-            {kunden.map(k => (
-              <div 
-                key={k.id} 
-                style={{ 
-                  padding: '8px 12px',
-                  margin: '5px 0',
-                  backgroundColor: selectedKunde?.id === k.id ? '#e8f4fd' : 'white',
-                  border: selectedKunde?.id === k.id ? '2px solid #3498db' : '1px solid #ddd',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
+        <div className="nav-section">
+          <div className="nav-title">Erweiterungen</div>
+          <button className="nav-item placeholder" type="button">
+            <span>🖼️</span>
+            <span>Foto-Dokumentation (bald)</span>
+          </button>
+          <button className="nav-item placeholder" type="button">
+            <span>🧾</span>
+            <span>Rechnungen (bald)</span>
+          </button>
+        </div>
+
+        <div className="nav-section">
+          <div className="nav-title">Hilfe</div>
+          <button
+            className={`nav-item ${activeView === 'anleitungen' ? 'active' : ''}`}
+            onClick={() => setActiveView('anleitungen')}
+          >
+            <span>📘</span>
+            <span>Anleitungen</span>
+          </button>
+        </div>
+
+        <div className="sidebar-kunden">
+          <div className="nav-title">Kunden Schnellzugriff</div>
+          <div className="quick-list">
+            {kunden.map((k) => (
+              <button
+                key={k.id}
+                type="button"
+                className={`quick-item ${selectedKunde?.id === k.id ? 'selected' : ''}`}
                 onClick={() => {
                   setSelectedKunde(k);
                   setActiveView('kunden');
                 }}
               >
-                <div style={{ fontWeight: 'bold' }}>{k.name} {k.vorname && k.vorname}</div>
-                <div style={{ fontSize: '12px', color: '#7f8c8d' }}>{k.adresse}</div>
-              </div>
+                <div className="quick-name">{k.name} {k.vorname && k.vorname}</div>
+                <div className="quick-address">{k.adresse || 'Keine Adresse'}</div>
+              </button>
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
-        {activeView === 'kalender' && (
+        <button
+          className={`nav-item settings ${activeView === 'einstellungen' ? 'active' : ''}`}
+          onClick={() => setActiveView('einstellungen')}
+          type="button"
+        >
+          <span>⚙️</span>
+          <span>Einstellungen</span>
+        </button>
+      </aside>
+
+      <main className="main-area">
+        <header className="main-header">
           <div>
-            <h2 style={{ marginTop: 0, color: '#2c3e50' }}>Terminkalender</h2>
+            <h1>{viewTitle[activeView].title}</h1>
+            <p>{viewTitle[activeView].subtitle}</p>
+          </div>
+        </header>
+
+        <section className="main-content">
+          {activeView === 'kalender' && (
             <Kalender termine={alleTermine} onTermineChange={refreshTermine} />
-          </div>
-        )}
+          )}
 
-        {activeView === 'kunden' && (
-          <div>
-            <h2 style={{ marginTop: 0, color: '#2c3e50' }}>Kundenverwaltung</h2>
-            
-            {/* Kunde hinzufügen */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              padding: '20px', 
-              borderRadius: '8px', 
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '20px'
-            }}>
-              <h3>Neuen Kunden anlegen</h3>
-              <form onSubmit={addKunde} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr auto', gap: '10px', alignItems: 'end' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Name:</label>
-                  <input
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Nachname"
-                    required
-                    style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Vorname:</label>
-                  <input
-                    value={vorname}
-                    onChange={e => setVorname(e.target.value)}
-                    placeholder="Vorname"
-                    style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Adresse:</label>
-                  <input
-                    value={adresse}
-                    onChange={e => setAdresse(e.target.value)}
-                    placeholder="Adresse"
-                    style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
-                  />
-                </div>
-                <button 
-                  type="submit"
-                  style={{ 
-                    padding: '8px 16px', 
-                    backgroundColor: '#27ae60', 
-                    color: 'white', 
-                    border: 'none', 
-                    borderRadius: '4px', 
-                    cursor: 'pointer' 
-                  }}
-                >
-                  Anlegen
-                </button>
-              </form>
-            </div>
-
-            {/* Kundenliste */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              padding: '20px', 
-              borderRadius: '8px', 
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '20px'
-            }}>
-              <h3>Alle Kunden</h3>
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {kunden.map(k => (
-                  <div 
-                    key={k.id} 
-                    style={{ 
-                      padding: '15px',
-                      border: selectedKunde?.id === k.id ? '2px solid #3498db' : '1px solid #ddd',
-                      borderRadius: '5px',
-                      backgroundColor: selectedKunde?.id === k.id ? '#e8f4fd' : '#f9f9f9',
-                    }}
-                  >
-                    {editingKunde?.id === k.id ? (
-                      // Bearbeitungsmodus
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr auto auto', gap: '8px', alignItems: 'center' }}>
-                        <input
-                          value={editName}
-                          onChange={e => setEditName(e.target.value)}
-                          placeholder="Name"
-                          style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px' }}
-                        />
-                        <input
-                          value={editVorname}
-                          onChange={e => setEditVorname(e.target.value)}
-                          placeholder="Vorname"
-                          style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px' }}
-                        />
-                        <input
-                          value={editAdresse}
-                          onChange={e => setEditAdresse(e.target.value)}
-                          placeholder="Adresse"
-                          style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px' }}
-                        />
-                        <button 
-                          onClick={saveEditKunde}
-                          style={{ 
-                            padding: '6px 12px', 
-                            backgroundColor: '#27ae60', 
-                            color: 'white', 
-                            border: 'none', 
-                            borderRadius: '4px', 
-                            cursor: 'pointer' 
-                          }}
-                        >
-                          ✓
-                        </button>
-                        <button 
-                          onClick={cancelEditKunde}
-                          style={{ 
-                            padding: '6px 12px', 
-                            backgroundColor: '#95a5a6', 
-                            color: 'white', 
-                            border: 'none', 
-                            borderRadius: '4px', 
-                            cursor: 'pointer' 
-                          }}
-                        >
-                          ✗
-                        </button>
-                      </div>
-                    ) : (
-                      // Anzeigemodus
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div
-                          style={{ cursor: 'pointer', flexGrow: 1 }}
-                          onClick={() => setSelectedKunde(k)}
-                        >
-                          <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
-                            {k.name} {k.vorname && k.vorname}
-                          </div>
-                          <div style={{ color: '#7f8c8d', fontSize: '14px' }}>{k.adresse}</div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '5px' }}>
-                          <button 
-                            onClick={() => startEditKunde(k)}
-                            style={{ 
-                              padding: '5px 10px', 
-                              backgroundColor: '#3498db', 
-                              color: 'white', 
-                              border: 'none', 
-                              borderRadius: '4px', 
-                              cursor: 'pointer' 
-                            }}
-                          >
-                            ✏️ Bearbeiten
-                          </button>
-                          <button 
-                            onClick={() => deleteKunde(k.id)}
-                            style={{ 
-                              padding: '5px 10px', 
-                              backgroundColor: '#e74c3c', 
-                              color: 'white', 
-                              border: 'none', 
-                              borderRadius: '4px', 
-                              cursor: 'pointer' 
-                            }}
-                          >
-                            🗑️ Löschen
-                          </button>
-                        </div>
-                      </div>
-                    )}
+          {activeView === 'kunden' && (
+            <div className="content-stack">
+              <div className="panel">
+                <h3>Neuen Kunden anlegen</h3>
+                <form className="create-form" onSubmit={addKunde}>
+                  <div>
+                    <label>Nachname</label>
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="z.B. Huber"
+                      required
+                    />
                   </div>
-                ))}
+                  <div>
+                    <label>Vorname</label>
+                    <input
+                      value={vorname}
+                      onChange={(e) => setVorname(e.target.value)}
+                      placeholder="z.B. Anna"
+                    />
+                  </div>
+                  <div>
+                    <label>Adresse</label>
+                    <input
+                      value={adresse}
+                      onChange={(e) => setAdresse(e.target.value)}
+                      placeholder="z.B. Musterstraße 12"
+                    />
+                  </div>
+                  <button className="btn btn-primary" type="submit">Anlegen</button>
+                </form>
+              </div>
+
+              <div className="panel">
+                <h3>Alle Kunden</h3>
+                <div className="kunden-grid">
+                  {kunden.map((k) => (
+                    <div
+                      key={k.id}
+                      className={`kunden-card ${selectedKunde?.id === k.id ? 'selected' : ''}`}
+                    >
+                      {editingKunde?.id === k.id ? (
+                        <div className="edit-grid">
+                          <input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            placeholder="Name"
+                          />
+                          <input
+                            value={editVorname}
+                            onChange={(e) => setEditVorname(e.target.value)}
+                            placeholder="Vorname"
+                          />
+                          <input
+                            value={editAdresse}
+                            onChange={(e) => setEditAdresse(e.target.value)}
+                            placeholder="Adresse"
+                          />
+                          <button className="btn btn-success" onClick={saveEditKunde}>✓</button>
+                          <button className="btn btn-muted" onClick={cancelEditKunde}>✗</button>
+                        </div>
+                      ) : (
+                        <div className="card-row">
+                          <button
+                            className="kunden-main"
+                            onClick={() => setSelectedKunde(k)}
+                            type="button"
+                          >
+                            <div className="kunden-name">{k.name} {k.vorname && k.vorname}</div>
+                            <div className="kunden-address">{k.adresse || 'Keine Adresse hinterlegt'}</div>
+                          </button>
+                          <div className="card-actions">
+                            <button className="btn btn-info" onClick={() => startEditKunde(k)}>Bearbeiten</button>
+                            <button className="btn btn-danger" onClick={() => deleteKunde(k.id)}>Löschen</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {selectedKunde && (
+                <div className="panel">
+                  <h3>Details für {selectedKunde.name}</h3>
+                  <PferdeListe besitzerId={selectedKunde.id} />
+                  <TerminVerwaltung besitzerId={selectedKunde.id} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeView === 'anleitungen' && (
+            <div className="content-stack">
+              <div className="panel">
+                <h3>Schnellstart</h3>
+                <p>1. Kalender öffnen und Termin anlegen.</p>
+                <p>2. Beim Kunden Pferde auswählen und Zeit setzen.</p>
+                <p>3. Terminstatus von vorreserviert auf bestätigt und danach auf abgeschlossen setzen.</p>
+              </div>
+              <div className="panel">
+                <h3>Häufige Fragen</h3>
+                <p><strong>Wie erstelle ich einen Folgetermin?</strong><br />Beim Abschließen eines Termins im Dokumentationsdialog die Wochen auswählen und speichern.</p>
+                <p><strong>Wie lege ich schnell einen neuen Kunden an?</strong><br />Im Termin-Dialog beim Feld Kunde auf + Neu klicken.</p>
               </div>
             </div>
+          )}
 
-            {/* Kundendetails */}
-            {selectedKunde && (
-              <div style={{ 
-                backgroundColor: 'white', 
-                padding: '20px', 
-                borderRadius: '8px', 
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}>
-                <h3>Details für {selectedKunde.name}</h3>
-                <PferdeListe besitzerId={selectedKunde.id} />
-                <TerminVerwaltung besitzerId={selectedKunde.id} />
+          {activeView === 'einstellungen' && (
+            <div className="content-stack">
+              <div className="panel">
+                <h3>App-Einstellungen</h3>
+                <p>Hier können später Farbschema, Standardintervalle und Integrationen konfiguriert werden.</p>
               </div>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }

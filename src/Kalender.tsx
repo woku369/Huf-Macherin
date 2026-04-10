@@ -1576,13 +1576,20 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   type="button"
                   onClick={async () => {
                     try {
-                      // Hufbearbeitung speichern
-                      await window.api.hufbearbeitung.add({
-                        terminId: editingTermin.id,
-                        datum: new Date().toISOString(),
-                        bearbeitung: bearbeitungsDaten.bearbeitung,
-                        bemerkungen: bearbeitungsDaten.bemerkungen
-                      });
+                      if (!editingTermin?.id) {
+                        throw new Error('Kein gültiger Termin ausgewählt.');
+                      }
+
+                      // Nur Hufbearbeitungen werden in hufbearbeitungen dokumentiert.
+                      const terminTyp = editingTermin.typ || 'hufbearbeitung';
+                      if (terminTyp === 'hufbearbeitung') {
+                        await window.api.hufbearbeitung.add({
+                          terminId: editingTermin.id,
+                          datum: new Date().toISOString(),
+                          bearbeitung: bearbeitungsDaten.bearbeitung,
+                          bemerkungen: bearbeitungsDaten.bemerkungen
+                        });
+                      }
 
                       // Termin abschließen + Folgetermin mit konfigurierbaren Wochen erstellen
                       const folgeWochen = parseInt(bearbeitungsDaten.naechsterTermin) || 0;
@@ -1608,7 +1615,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       alert(`✅ Bearbeitung erfolgreich gespeichert!${folgeText}`);
                     } catch (error) {
                       console.error('Fehler beim Speichern der Bearbeitung:', error);
-                      alert('❌ Fehler beim Speichern der Bearbeitung!');
+                      const errorMessage = error instanceof Error ? error.message : String(error);
+                      alert(`❌ Fehler beim Speichern der Bearbeitung!\n\n${errorMessage}`);
                     }
                   }}
                   style={{

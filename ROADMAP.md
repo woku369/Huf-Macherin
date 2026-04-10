@@ -1,6 +1,6 @@
 # Roadmap – Die Huf-Macherin App
 
-> **Zuletzt aktualisiert:** 10. April 2026 (Session 2)  
+> **Zuletzt aktualisiert:** 10. April 2026 (Session 3)  
 > **App-Version:** 0.0.0 (Entwicklungsphase)  
 > **Stack:** Electron + React + Vite + TypeScript + SQLite (better-sqlite3)
 
@@ -9,8 +9,8 @@
 ## Gesamtfortschritt
 
 ```
-Kernfunktionen    ████████████░░░░░░░░  60%
-Kalender          ████████████████░░░░  80%
+Kernfunktionen    ██████████████░░░░░░  72%
+Kalender          █████████████████░░░  84%
 Google Calendar   ████░░░░░░░░░░░░░░░░  20%
 PWA / Synology    ░░░░░░░░░░░░░░░░░░░░   0%
 ```
@@ -67,8 +67,9 @@ PWA / Synology    ░░░░░░░░░░░░░░░░░░░░  
 - [x] IPC-Kommunikation Main ↔ Renderer
 - [x] Build-Script mit Backend + Frontend Trennung
 - [x] HTML-Pfade-Fix für Produktion (`fix-html-paths`)
-- [x] DevTools in Production aktiviert (für Debugging)
+- [x] DevTools nur im Dev-Modus
 - [x] **April 2026:** Backend neu gebaut – `dist/db.js`, `dist/preload.js`, `dist/ipc-handler.js` aktuell
+- [x] Startfehler behoben: `build-frontend` leert `dist` nicht mehr (`vite.config.ts` + `vite.config.js` mit `emptyOutDir: false`)
 
 ### Datenbankschema
 - [x] Tabelle `kunden` (id, name, vorname, adresse)
@@ -112,6 +113,13 @@ PWA / Synology    ░░░░░░░░░░░░░░░░░░░░  
   - [x] Empfehlung nächster Termin (4/6/8/12 Wochen)
   - [x] Speichern in `hufbearbeitungen`-Tabelle
   - [x] Status automatisch auf "abgeschlossen" setzen
+- [x] Speichern robuster: validierte Fehlermeldung + DB-Migration für Alt-Schema `hufbearbeitungen` ohne `terminId`
+
+### UI/UX
+- [x] Modernisierte App-Struktur mit linker Sidebar
+- [x] Logo-Platzhalter links oben integriert
+- [x] Gedeckte Farbpalette statt knalliger Standardoptik
+- [x] Sidebar mit Bereichen für Erweiterungen, `Anleitungen` und `Einstellungen` (letzter Tab)
 
 ### Export
 - [x] Kalender als PDF exportieren (html2canvas + jsPDF)
@@ -125,16 +133,13 @@ PWA / Synology    ░░░░░░░░░░░░░░░░░░░░  
 
 | # | Problem | Datei | Priorität |
 |---|---------|-------|-----------|
-| B1 | `window.api.updateTerminStatus` (flat) existiert in `dist/preload.js` nicht mehr – nur noch `window.api.termine.updateStatus` (nested). Alte Aufrufe würden scheitern. | preload.ts / window-api.d.ts | **Hoch** |
 | B2 | Bearbeitungsmaske öffnet bei "Bestätigt" – logisch falsch: "Bestätigt" = Termin zugesagt, Dokumentation sollte erst bei "Abschließen" kommen. | Kalender.tsx | **Mittel** |
 | B3 | `naechsterTermin`-Wert aus der Bearbeitungsmaske (4/6/8/12 Wochen) wird nicht für den Folgetermin genutzt – der ipc-handler.ts `termine:update` erstellt immer fix 4 Wochen. Das neue Speichern via `termine:updateStatus` erstellt überhaupt keinen Folgetermin. | Kalender.tsx / ipc-handler.ts | **Mittel** |
-| B4 | "Neuen Kunden anlegen" Button im Termin-Dialog zeigt nur alert(). Nicht implementiert. | Kalender.tsx ~Z.1100 | **Mittel** |
 
 ### Nicht-kritisch
 
 | # | Problem | Datei |
 |---|---------|-------|
-| B5 | DevTools werden immer geöffnet (auch in Production). Sollte nur für Dev-Builds sein. | electron-main.cjs |
 | B6 | `window.api.updateTerminStatus` in `window-api.d.ts` deklariert aber `dist/preload.js` hat es nicht mehr als Flat-API | window-api.d.ts |
 | B7 | Kein Fehler-Feedback wenn DB-Operation fehlschlägt (nur alert()) | alle Formulare |
 | B8 | `TerminVerwaltung` + `TerminListe` sind ältere Komponenten (pre-Kalender), redundant mit neuem Kalender-Workflow | TerminVerwaltung.tsx |
@@ -146,14 +151,15 @@ PWA / Synology    ░░░░░░░░░░░░░░░░░░░░  
 ### Phase 0: GitHub Repository (dringend!)
 - [x] GitHub-Repo anlegen: https://github.com/woku369/Huf-Macherin
 - [x] `.gitignore` korrigiert (dist/assets ignoriert, dist/db.js + Backend behalten, *.db ausgeschlossen)
-- [ ] Initial-Commit & Push (Git Bash oder Git-fähiges Terminal nötig)
+- [x] Initial-Commit & Push
 
 ---
 
 ### Phase 1: Stabilisierung
 
-- [ ] **B4 Fix:** Neuen Kunden im Termin-Dialog anlegen (Modal-in-Modal)
-- [ ] **B5 Fix:** DevTools nur im Dev-Modus öffnen
+- [x] **B4 Fix:** Neuen Kunden im Termin-Dialog anlegen (Modal-in-Modal)
+- [x] **B5 Fix:** DevTools nur im Dev-Modus öffnen
+- [x] **B1 Fix:** Flat-API Alias `updateTerminStatus` für Rückwärtskompatibilität ergänzt
 
 ---
 
@@ -197,11 +203,11 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 - Im Termin-Dialog: Klick auf "Typ" schaltet die Felder um
 
 #### UI-Änderungen
-- [ ] Termin-Dialog: Typ-Auswahl am Anfang (schaltet Felder um)
-- [ ] Kalender: Farblegende um Reitstunde + Eigener Termin erweitern
+- [x] Termin-Dialog: Typ-Auswahl am Anfang (schaltet Felder um)
+- [x] Kalender: Farbcodierung für Reitstunde + Eigener Termin ergänzt
 - [ ] Tooltip: Anzeige und Status-Buttons passend zum Typ
-- [ ] Status-Farbgebung: eigene Farben pro Typ
-- [ ] Folgetermin-Logik: nur bei Hufbearbeitung
+- [x] Status-Farbgebung: eigene Farben pro Typ
+- [x] Folgetermin-Logik: nur bei Hufbearbeitung
 - [ ] Google Calendar Export: Typ → Calendar-Kategorie
 
 ---
@@ -316,7 +322,7 @@ Folgende Skills wären hilfreich zu definieren / laden für zukünftige Arbeit:
 
 | Version | Inhalt | Wann |
 |---------|--------|------|
-| **v0.1** | Alle kritischen Bugs (B1–B5) behoben, stabile Basisfunktionen | Nächste Session |
+| **v0.1** | Basis stabil: Startfehler behoben, B1/B4/B5 erledigt, modernisierte Sidebar-UI | Erreicht (10. April 2026) |
 | **v0.2** | Pferde-Historie, Feiertage, Termin-Drag&Drop | — |
 | **v0.3** | Google Calendar OAuth2 funktionsfähig | — |
 | **v1.0** | Stabile Desktop-App mit vollständigem Workflow | — |
