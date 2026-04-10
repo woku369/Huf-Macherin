@@ -71,6 +71,14 @@ PWA / Synology    ░░░░░░░░░░░░░░░░░░░░  
 - [x] **April 2026:** Backend neu gebaut – `dist/db.js`, `dist/preload.js`, `dist/ipc-handler.js` aktuell
 - [x] Startfehler behoben: `build-frontend` leert `dist` nicht mehr (`vite.config.ts` + `vite.config.js` mit `emptyOutDir: false`)
 
+### Packaging-Notiz (Node-Modules)
+- [ ] Dependency- und Packaging-Audit beim **ersten portable Build** durchführen
+- [ ] Ziel: nur benötigte Runtime-Abhängigkeiten in das distributable Artefakt
+- [ ] Prüfen: ungenutzte direkte Dependencies, transitive Schwergewichte, `dependencies` vs. `devDependencies`
+- [ ] Ergebnis dokumentieren (vorher/nachher Größe, entfernte Pakete, Build-/Runtime-Checks)
+
+> Hinweis: Die hohe Anzahl in `node_modules` ist aktuell erwartbar (viele transitive Build- und Tooling-Abhängigkeiten) und wird bewusst erst mit dem ersten portable Build optimiert.
+
 ### Datenbankschema
 - [x] Tabelle `kunden` (id, name, vorname, adresse)
 - [x] Tabelle `pferde` (id, name, geburtsjahr, alterJahre, geschlecht, bemerkungen, besitzerId)
@@ -133,16 +141,15 @@ PWA / Synology    ░░░░░░░░░░░░░░░░░░░░  
 
 | # | Problem | Datei | Priorität |
 |---|---------|-------|-----------|
-| B2 | Bearbeitungsmaske öffnet bei "Bestätigt" – logisch falsch: "Bestätigt" = Termin zugesagt, Dokumentation sollte erst bei "Abschließen" kommen. | Kalender.tsx | **Mittel** |
-| B3 | `naechsterTermin`-Wert aus der Bearbeitungsmaske (4/6/8/12 Wochen) wird nicht für den Folgetermin genutzt – der ipc-handler.ts `termine:update` erstellt immer fix 4 Wochen. Das neue Speichern via `termine:updateStatus` erstellt überhaupt keinen Folgetermin. | Kalender.tsx / ipc-handler.ts | **Mittel** |
+| - | Aktuell keine offenen kritischen Bugs im Kern-Statusworkflow (B2/B3 behoben). | Kalender.tsx / ipc-handler.ts | - |
 
 ### Nicht-kritisch
 
 | # | Problem | Datei |
 |---|---------|-------|
 | B6 | `window.api.updateTerminStatus` in `window-api.d.ts` deklariert aber `dist/preload.js` hat es nicht mehr als Flat-API | window-api.d.ts |
-| B7 | Kein Fehler-Feedback wenn DB-Operation fehlschlägt (nur alert()) | alle Formulare |
-| B8 | `TerminVerwaltung` + `TerminListe` sind ältere Komponenten (pre-Kalender), redundant mit neuem Kalender-Workflow | TerminVerwaltung.tsx |
+| B7 | Weitgehend behoben: Kalender, App und Pferdebereich nutzen In-App-Statusmeldungen. Offen bleibt nur der Google-OAuth-Code-`prompt` im Export-Flow. | Kalender.tsx / App.tsx / PferdeListe.tsx |
+| B8 | Behoben: Legacy-Komponenten `TerminVerwaltung` und `TerminListe` aus aktivem Codepfad entfernt und gelöscht. | App.tsx |
 
 ---
 
@@ -160,6 +167,8 @@ PWA / Synology    ░░░░░░░░░░░░░░░░░░░░  
 - [x] **B4 Fix:** Neuen Kunden im Termin-Dialog anlegen (Modal-in-Modal)
 - [x] **B5 Fix:** DevTools nur im Dev-Modus öffnen
 - [x] **B1 Fix:** Flat-API Alias `updateTerminStatus` für Rückwärtskompatibilität ergänzt
+- [x] **B2 Fix:** Bearbeitungsmaske öffnet nur bei `Abschließen`, nicht bei `Bestätigt`
+- [x] **B3 Fix:** Folgetermin nutzt konfigurierbare Wochen über `termine:abschliessen`; Legacy-4-Wochen-Automatismus aus `termine:update` entfernt
 
 ---
 

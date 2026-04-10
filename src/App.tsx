@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { BookOpen, CalendarDays, Camera, ReceiptText, Settings, Users } from 'lucide-react';
 import './App.css';
 import PferdeListe from './PferdeListe';
-import TerminVerwaltung from './TerminVerwaltung';
 import Kalender from './Kalender';
 
 interface Kunde {
@@ -20,6 +19,8 @@ type ThemeSettings = {
   ok: string;
   danger: string;
 };
+
+type AppNoticeType = 'error' | 'success' | 'warning' | 'info';
 
 const DEFAULT_THEME: ThemeSettings = {
   bgPage: '#f4f1ea',
@@ -40,6 +41,8 @@ function App() {
   const [activeView, setActiveView] = useState<'kalender' | 'kunden' | 'anleitungen' | 'einstellungen'>('kalender');
   const [logoDataUrl, setLogoDataUrl] = useState('');
   const [theme, setTheme] = useState<ThemeSettings>(DEFAULT_THEME);
+  const [appNotice, setAppNotice] = useState<{ type: AppNoticeType; message: string } | null>(null);
+  const [pendingDeleteKundeId, setPendingDeleteKundeId] = useState<number | null>(null);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   
   // Bearbeitungsmodus
@@ -125,12 +128,27 @@ function App() {
     setEditAdresse('');
   };
 
-  const deleteKunde = async (id: number) => {
-    if (confirm('Wirklich löschen? Alle zugehörigen Pferde und Termine werden ebenfalls gelöscht!')) {
-      await window.api.deleteKunde(id);
-      setKunden(kunden.filter(k => k.id !== id));
-      if (selectedKunde?.id === id) setSelectedKunde(null);
-    }
+  const deleteKunde = (id: number) => {
+    setPendingDeleteKundeId(id);
+    setAppNotice({
+      type: 'warning',
+      message: 'Kundenlöschung vorgemerkt: Alle zugehörigen Pferde und Termine werden ebenfalls gelöscht.'
+    });
+  };
+
+  const confirmDeleteKunde = async () => {
+    if (!pendingDeleteKundeId) return;
+    const id = pendingDeleteKundeId;
+    await window.api.deleteKunde(id);
+    setKunden(kunden.filter(k => k.id !== id));
+    if (selectedKunde?.id === id) setSelectedKunde(null);
+    setPendingDeleteKundeId(null);
+    setAppNotice({ type: 'success', message: 'Kunde wurde gelöscht.' });
+  };
+
+  const cancelDeleteKunde = () => {
+    setPendingDeleteKundeId(null);
+    setAppNotice({ type: 'info', message: 'Löschvorgang abgebrochen.' });
   };
 
   const refreshTermine = async () => {
@@ -144,7 +162,7 @@ function App() {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('Bitte eine Bilddatei wählen (PNG/JPG/WebP).');
+      setAppNotice({ type: 'error', message: 'Bitte eine Bilddatei wählen (PNG/JPG/WebP).' });
       return;
     }
     const reader = new FileReader();
@@ -153,6 +171,7 @@ function App() {
       if (typeof result === 'string') {
         setLogoDataUrl(result);
         localStorage.setItem('hufmacherinLogo', result);
+        setAppNotice({ type: 'success', message: 'Logo wurde gespeichert.' });
       }
     };
     reader.readAsDataURL(file);
@@ -164,6 +183,7 @@ function App() {
     if (logoInputRef.current) {
       logoInputRef.current.value = '';
     }
+    setAppNotice({ type: 'info', message: 'Logo wurde entfernt.' });
   };
 
   const updateThemeColor = (key: keyof ThemeSettings, value: string) => {
@@ -316,6 +336,52 @@ function App() {
         </header>
 
         <section className="main-content">
+          {appNotice && (
+            <div
+              style={{
+                marginBottom: '12px',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: `1px solid ${appNotice.type === 'error' ? '#c07d71' : appNotice.type === 'success' ? '#7f9b84' : appNotice.type === 'warning' ? '#ba9968' : '#8f9ea3'}`,
+                backgroundColor: appNotice.type === 'error' ? '#f7ece9' : appNotice.type === 'success' ? '#e6efe8' : appNotice.type === 'warning' ? '#f5efdf' : '#e9eef0',
+                color: appNotice.type === 'error' ? '#6e3429' : appNotice.type === 'success' ? '#2f4e36' : appNotice.type === 'warning' ? '#6e5129' : '#2f454b',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '10px',
+                flexWrap: 'wrap'
+              }}
+            >
+              <span>{appNotice.message}</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {pendingDeleteKundeId && appNotice.type === 'warning' && (
+                  <>
+                    <button className="btn btn-danger" type="button" onClick={confirmDeleteKunde}>Löschen bestätigen</button>
+                    <button className="btn btn-muted" type="button" onClick={cancelDeleteKunde}>Abbrechen</button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAppNotice(null);
+                    setPendingDeleteKundeId(null);
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: 'inherit',
+                    fontSize: '18px',
+                    lineHeight: 1,
+                    cursor: 'pointer'
+                  }}
+                  aria-label="Hinweis schließen"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
           {activeView === 'kalender' && (
             <Kalender termine={alleTermine} onTermineChange={refreshTermine} />
           )}
@@ -407,7 +473,9 @@ function App() {
                 <div className="panel">
                   <h3>Details für {selectedKunde.name}</h3>
                   <PferdeListe besitzerId={selectedKunde.id} />
-                  <TerminVerwaltung besitzerId={selectedKunde.id} />
+                  <div className="settings-note" style={{ marginTop: '12px' }}>
+                    Die alte Terminliste ist deaktiviert. Alle Terminabläufe laufen zentral über den Kalender (inkl. Status-Workflow und Abschlussdialog).
+                  </div>
                 </div>
               )}
             </div>

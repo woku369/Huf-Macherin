@@ -14,6 +14,8 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
   const [pferde, setPferde] = useState<Pferd[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', geburtsjahr: '', geschlecht: 'Stute', bemerkungen: '' });
+  const [notice, setNotice] = useState<{ type: 'error' | 'success' | 'warning' | 'info'; message: string } | null>(null);
+  const [pendingDeletePferdId, setPendingDeletePferdId] = useState<number | null>(null);
   
   // Bearbeitungsmodus
   const [editingPferd, setEditingPferd] = useState<Pferd | null>(null);
@@ -38,6 +40,7 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
     setPferde([...pferde, neuesPferd]);
     setForm({ name: '', geburtsjahr: '', geschlecht: 'Stute', bemerkungen: '' });
     setShowForm(false);
+    setNotice({ type: 'success', message: `Pferd "${neuesPferd.name}" wurde angelegt.` });
   };
 
   const startEditPferd = (pferd: Pferd) => {
@@ -63,6 +66,7 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
     });
     setPferde(pferde.map(p => p.id === updatedPferd.id ? updatedPferd : p));
     setEditingPferd(null);
+    setNotice({ type: 'success', message: `Pferd "${updatedPferd.name}" wurde gespeichert.` });
   };
 
   const cancelEditPferd = () => {
@@ -70,16 +74,74 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
     setEditForm({ name: '', geburtsjahr: '', geschlecht: 'Stute', bemerkungen: '' });
   };
 
-  const deletePferd = async (id: number) => {
-    if (confirm('Wirklich löschen? Alle zugehörigen Termine werden ebenfalls gelöscht!')) {
-      await window.api.deletePferd(id);
-      setPferde(pferde.filter(p => p.id !== id));
-    }
+  const deletePferd = (id: number) => {
+    setPendingDeletePferdId(id);
+    setNotice({
+      type: 'warning',
+      message: 'Pferdelöschung vorgemerkt: Alle zugehörigen Termine werden ebenfalls gelöscht.'
+    });
+  };
+
+  const confirmDeletePferd = async () => {
+    if (!pendingDeletePferdId) return;
+    const id = pendingDeletePferdId;
+    await window.api.deletePferd(id);
+    setPferde(pferde.filter(p => p.id !== id));
+    setPendingDeletePferdId(null);
+    setNotice({ type: 'success', message: 'Pferd wurde gelöscht.' });
+  };
+
+  const cancelDeletePferd = () => {
+    setPendingDeletePferdId(null);
+    setNotice({ type: 'info', message: 'Löschvorgang abgebrochen.' });
   };
 
   return (
     <div style={{ marginTop: 10, marginBottom: 20, padding: 20, border: '1px solid #ddd', borderRadius: 8, backgroundColor: '#f9f9f9' }}>
       <h3 style={{ marginTop: 0, color: '#2c3e50' }}>🐴 Pferde</h3>
+
+      {notice && (
+        <div
+          style={{
+            marginBottom: '12px',
+            padding: '10px 12px',
+            borderRadius: '8px',
+            border: `1px solid ${notice.type === 'error' ? '#c07d71' : notice.type === 'success' ? '#7f9b84' : notice.type === 'warning' ? '#ba9968' : '#8f9ea3'}`,
+            backgroundColor: notice.type === 'error' ? '#f7ece9' : notice.type === 'success' ? '#e6efe8' : notice.type === 'warning' ? '#f5efdf' : '#e9eef0',
+            color: notice.type === 'error' ? '#6e3429' : notice.type === 'success' ? '#2f4e36' : notice.type === 'warning' ? '#6e5129' : '#2f454b',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '10px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <span>{notice.message}</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {pendingDeletePferdId && notice.type === 'warning' && (
+              <>
+                <button type="button" onClick={confirmDeletePferd} style={{ padding: '6px 10px', backgroundColor: '#a55d4e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                  Löschen bestätigen
+                </button>
+                <button type="button" onClick={cancelDeletePferd} style={{ padding: '6px 10px', backgroundColor: '#8a8f8b', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                  Abbrechen
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setNotice(null);
+                setPendingDeletePferdId(null);
+              }}
+              style={{ border: 'none', background: 'transparent', color: 'inherit', fontSize: '18px', lineHeight: 1, cursor: 'pointer' }}
+              aria-label="Hinweis schließen"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
       
       {pferde.length === 0 ? (
         <p style={{ color: '#7f8c8d', fontStyle: 'italic' }}>Noch keine Pferde angelegt.</p>

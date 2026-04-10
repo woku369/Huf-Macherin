@@ -96,31 +96,25 @@ ipcMain.handle('termine:delete', (_event: any, id: number) => {
   return true;
 });
 ipcMain.handle('termine:update', async (_event: any, termin: Termin) => {
-  const stmt = db.prepare('UPDATE termine SET datum = ?, rechnung = ?, bemerkung = ?, ende = ?, status = ?, hufbemerkungen = ? WHERE id = ?');
-  stmt.run(termin.datum, termin.rechnung ? 1 : 0, termin.bemerkung, termin.ende, termin.status, termin.hufbemerkungen ? JSON.stringify(termin.hufbemerkungen) : null, termin.id);
-
-  // Automatischer Vorschlagstermin nach Abschluss
-  if (termin.status === 'abgeschlossen') {
-    // Prüfen, ob schon ein Vorschlag für dieses Pferd existiert
-    const check = db.prepare('SELECT COUNT(*) as cnt FROM termine WHERE pferdId = ? AND status = ?').get(termin.pferdId, 'vorschlag');
-    if (check && check.cnt === 0) {
-      // Neuen Vorschlagstermin 4 Wochen später erstellen, auf Werktag verschieben
-      const neuesDatum = new Date(termin.datum);
-      neuesDatum.setDate(neuesDatum.getDate() + 28); // 4 Wochen
-      
-      // Auf nächsten Werktag verschieben, falls Wochenende
-      const dayOfWeek = neuesDatum.getDay(); // 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
-      if (dayOfWeek === 0) { // Sonntag -> Montag
-        neuesDatum.setDate(neuesDatum.getDate() + 1);
-      } else if (dayOfWeek === 6) { // Samstag -> Montag  
-        neuesDatum.setDate(neuesDatum.getDate() + 2);
-      }
-      
-      const stmt2 = db.prepare('INSERT INTO termine (pferdId, datum, rechnung, bemerkung, status) VALUES (?, ?, ?, ?, ?)');
-      stmt2.run(termin.pferdId, neuesDatum.toISOString(), 0, 'Automatischer Bearbeitungsvorschlag (4 Wochen)', 'vorschlag');
-    }
+  const existing: any = db.prepare('SELECT * FROM termine WHERE id = ?').get(termin.id);
+  if (!existing) {
+    throw new Error('Termin nicht gefunden');
   }
-  return termin;
+
+  const nextDatum = termin.datum ?? existing.datum;
+  const nextRechnung = typeof termin.rechnung === 'boolean' ? (termin.rechnung ? 1 : 0) : existing.rechnung;
+  const nextBemerkung = termin.bemerkung ?? existing.bemerkung;
+  const nextEnde = termin.ende !== undefined ? termin.ende : existing.ende;
+  const nextStatus = termin.status ?? existing.status;
+  const nextHufbemerkungen = termin.hufbemerkungen === undefined
+    ? existing.hufbemerkungen
+    : (termin.hufbemerkungen ? JSON.stringify(termin.hufbemerkungen) : null);
+
+  const stmt = db.prepare('UPDATE termine SET datum = ?, rechnung = ?, bemerkung = ?, ende = ?, status = ?, hufbemerkungen = ? WHERE id = ?');
+  stmt.run(nextDatum, nextRechnung, nextBemerkung, nextEnde, nextStatus, nextHufbemerkungen, termin.id);
+
+  // Folgetermin-Logik liegt ausschließlich in `termine:abschliessen`, damit dort der gewählte Wochenwert verwendet wird.
+  return { ...existing, ...termin, status: nextStatus };
 });
 
 // Erweiterte Termin-API für Mehrfach-Pferde-Termine

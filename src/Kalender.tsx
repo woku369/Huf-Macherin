@@ -34,9 +34,13 @@ interface KalenderProps {
 }
 
 export default function Kalender({ termine, onSelectDate, onTermineChange }: KalenderProps) {
+  type NoticeType = 'error' | 'success' | 'info';
+  type TerminTyp = 'hufbearbeitung' | 'reitstunde' | 'eigener_termin';
+
   const [selectedEvent, setSelectedEvent] = useState<TerminEvent | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [notice, setNotice] = useState<{ type: NoticeType; message: string } | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   
@@ -128,6 +132,53 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
   };
 
   const timeOptions = generateTimeOptions();
+
+  const showNotice = (type: NoticeType, message: string) => {
+    setNotice({ type, message });
+  };
+
+  const getTerminTyp = (resource: any): TerminTyp => {
+    const typ = resource?.typ;
+    if (typ === 'reitstunde' || typ === 'eigener_termin') {
+      return typ;
+    }
+    return 'hufbearbeitung';
+  };
+
+  const getStatusConfig = (status: string, terminTyp: TerminTyp) => {
+    if (terminTyp === 'reitstunde') {
+      if (status === 'abgehalten') return { label: 'Abgehalten', color: '#6c8a70' };
+      if (status === 'abgesagt') return { label: 'Abgesagt', color: '#a55d4e' };
+      return { label: 'Geplant', color: '#a67c52' };
+    }
+
+    if (terminTyp === 'eigener_termin') {
+      return { label: 'Fixtermin', color: '#8b5e4e' };
+    }
+
+    if (status === 'abgeschlossen') return { label: 'Abgeschlossen', color: '#6c8a70' };
+    if (status === 'vorschlag') return { label: 'Vorschlag', color: '#b39563' };
+    if (status === 'vorreserviert') return { label: 'Vorreserviert', color: '#8a7d90' };
+    if (status === 'bestätigt') return { label: 'Bestätigt', color: '#5f7f86' };
+    return { label: status || 'Geplant', color: '#8a8f8b' };
+  };
+
+  const getStatusActions = (terminTyp: TerminTyp) => {
+    if (terminTyp === 'eigener_termin') return [] as Array<{ value: string; label: string; color: string }>;
+    if (terminTyp === 'reitstunde') {
+      return [
+        { value: 'geplant', label: 'Geplant', color: '#a67c52' },
+        { value: 'abgehalten', label: 'Abgehalten', color: '#6c8a70' },
+        { value: 'abgesagt', label: 'Abgesagt', color: '#a55d4e' }
+      ];
+    }
+    return [
+      { value: 'vorreserviert', label: 'Vorreserviert', color: '#8a7d90' },
+      { value: 'bestätigt', label: 'Bestätigen', color: '#5f7f86' },
+      { value: 'abgeschlossen', label: 'Abschließen', color: '#6c8a70' },
+      { value: 'vorschlag', label: 'Als Vorschlag', color: '#b39563' }
+    ];
+  };
 
   // Lade Kunden beim Mount
   useEffect(() => {
@@ -385,9 +436,9 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
           datum: t.datum,
         });
       }
-      alert('Alle Termine wurden an Google Kalender übertragen!');
+      showNotice('success', 'Alle Termine wurden an Google Kalender übertragen.');
     } catch (error) {
-      alert('Fehler beim Export: ' + error);
+      showNotice('error', `Fehler beim Export: ${String(error)}`);
     }
   };
 
@@ -415,22 +466,22 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
   const handleCreateTermin = async () => {
     // Validierung je nach Typ
     if (!selectedDate) {
-      alert('Fehler: Kein Datum ausgewählt!');
+      showNotice('error', 'Kein Datum ausgewählt.');
       return;
     }
     
     if (createFormData.typ !== 'eigener_termin' && !createFormData.kundeId.trim()) {
-      alert('Bitte einen Kunden auswählen!');
+      showNotice('error', 'Bitte einen Kunden auswählen.');
       return;
     }
 
     if (createFormData.typ === 'hufbearbeitung' && createFormData.ausgewaehltePferde.length === 0) {
-      alert('Bitte mindestens ein Pferd auswählen!');
+      showNotice('error', 'Bitte mindestens ein Pferd auswählen.');
       return;
     }
 
     if (createFormData.typ === 'eigener_termin' && !createFormData.titel.trim()) {
-      alert('Bitte einen Titel für den eigenen Termin eingeben!');
+      showNotice('error', 'Bitte einen Titel für den eigenen Termin eingeben.');
       return;
     }
 
@@ -477,7 +528,11 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
         ? `${format(terminStart, 'HH:mm')} bis ${format(terminEnde, 'HH:mm')}`
         : `ab ${format(terminStart, 'HH:mm')}`;
       
-      alert(`${createFormData.ausgewaehltePferde.length} Termine erfolgreich vorreserviert!\n\nTitel: ${terminTitel}\nDatum: ${format(terminStart, 'dd.MM.yyyy')}\nZeit: ${zeitText}\nKunde: ${ausgewaehlterKunde?.name || 'Unbekannt'}\nPferde: ${ausgewaehltePferdeNames}\nBemerkung: ${createFormData.bemerkung || '(keine)'}\n\nStatus: Vorreserviert`);
+      const erstelltCount = createFormData.typ === 'hufbearbeitung' ? createFormData.ausgewaehltePferde.length : 1;
+      showNotice(
+        'success',
+        `${erstelltCount} Termin(e) gespeichert: ${format(terminStart, 'dd.MM.yyyy')} (${zeitText})`
+      );
 
       // Schließe das Formular
       setShowCreateForm(false);
@@ -497,7 +552,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       }
 
     } catch (error) {
-      alert('Fehler beim Erstellen der Termine: ' + error);
+      showNotice('error', `Fehler beim Erstellen der Termine: ${String(error)}`);
     }
   };
 
@@ -508,15 +563,16 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       pferd: resource.pferdName || 'Unbekannt',
       datum: format(event.start, 'dd.MM.yyyy HH:mm', { locale: de }),
       bemerkung: resource.bemerkung || 'Keine Bemerkungen',
-      status: resource.status || 'geplant'
+      status: resource.status || 'geplant',
+      typ: getTerminTyp(resource)
     };
   };
 
   // Status-Änderung mit automatischer Bearbeitungsmaske
-  const handleStatusChange = async (terminId: number, newStatus: string) => {
+  const handleStatusChange = async (terminId: number, newStatus: string, terminTyp: TerminTyp) => {
     try {
       // "Abschließen" → erst Bearbeitungsmaske öffnen, Status wird dort gesetzt
-      if (newStatus === 'abgeschlossen') {
+      if (terminTyp === 'hufbearbeitung' && newStatus === 'abgeschlossen') {
         const termin = termine.find(t => t.id === terminId);
         if (termin) {
           setEditingTermin(termin);
@@ -545,14 +601,14 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       }
 
     } catch (error) {
-      alert('Fehler beim Ändern des Status: ' + error);
+      showNotice('error', `Fehler beim Ändern des Status: ${String(error)}`);
     }
   };
 
   // Neues Pferd anlegen
   const handleCreateKunde = async () => {
     if (!kundeFormData.name.trim()) {
-      alert('Bitte geben Sie einen Nachnamen ein!');
+      showNotice('error', 'Bitte einen Nachnamen eingeben.');
       return;
     }
     try {
@@ -572,18 +628,18 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       setKundeFormData({ name: '', vorname: '', adresse: '' });
       setShowKundeForm(false);
     } catch (error) {
-      alert('Fehler beim Anlegen des Kunden: ' + error);
+      showNotice('error', `Fehler beim Anlegen des Kunden: ${String(error)}`);
     }
   };
 
   const handleCreatePferd = async () => {
     if (!createFormData.kundeId) {
-      alert('Bitte wählen Sie zuerst einen Kunden aus!');
+      showNotice('error', 'Bitte zuerst einen Kunden auswählen.');
       return;
     }
     
     if (!pferdFormData.name.trim()) {
-      alert('Bitte geben Sie einen Namen für das Pferd ein!');
+      showNotice('error', 'Bitte einen Namen für das Pferd eingeben.');
       return;
     }
 
@@ -618,15 +674,48 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       });
       setShowPferdForm(false);
 
-      alert(`Pferd "${neuesPferd.name}" erfolgreich angelegt und ausgewählt!`);
+      showNotice('success', `Pferd "${neuesPferd.name}" wurde angelegt und ausgewählt.`);
 
     } catch (error) {
-      alert('Fehler beim Anlegen des Pferdes: ' + error);
+      showNotice('error', `Fehler beim Anlegen des Pferdes: ${String(error)}`);
     }
   };
 
   return (
     <div style={{ position: 'relative' }}>
+      {notice && (
+        <div
+          style={{
+            marginBottom: '12px',
+            padding: '10px 12px',
+            borderRadius: '8px',
+            border: `1px solid ${notice.type === 'error' ? '#c07d71' : notice.type === 'success' ? '#7f9b84' : '#8f9ea3'}`,
+            backgroundColor: notice.type === 'error' ? '#f7ece9' : notice.type === 'success' ? '#e6efe8' : '#e9eef0',
+            color: notice.type === 'error' ? '#6e3429' : notice.type === 'success' ? '#2f4e36' : '#2f454b',
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '10px',
+            alignItems: 'center'
+          }}
+        >
+          <span>{notice.message}</span>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              color: 'inherit',
+              fontSize: '18px',
+              lineHeight: 1,
+              cursor: 'pointer'
+            }}
+            aria-label="Hinweis schließen"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button 
@@ -799,6 +888,9 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             if (!currentEvent) return null;
             
             const details = formatEventDetails(currentEvent);
+            const statusConfig = getStatusConfig(details.status, details.typ);
+            const statusActions = getStatusActions(details.typ);
+            const typLabel = details.typ === 'hufbearbeitung' ? 'Hufbearbeitung' : details.typ === 'reitstunde' ? 'Reitstunde' : 'Eigener Termin';
             return (
               <>
                 <div style={{ 
@@ -814,15 +906,23 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                 
                 <div style={{ lineHeight: '1.6' }}>
                   <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ marginRight: '8px' }}>🏷️</span>
+                    <strong>Typ:</strong>
+                    <span style={{ marginLeft: '8px', color: '#bcb4a8' }}>{typLabel}</span>
+                  </div>
+
+                  <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
                     <span style={{ marginRight: '8px' }}>👤</span>
                     <strong>Kunde:</strong> 
-                    <span style={{ marginLeft: '8px', color: '#bcb4a8' }}>{details.kunde}</span>
+                    <span style={{ marginLeft: '8px', color: '#bcb4a8' }}>{details.typ === 'eigener_termin' ? 'Kein Kunde' : details.kunde}</span>
                   </div>
                   
                   <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
                     <span style={{ marginRight: '8px' }}>🐴</span>
                     <strong>Pferd:</strong> 
-                    <span style={{ marginLeft: '8px', color: '#bcb4a8' }}>{details.pferd}</span>
+                    <span style={{ marginLeft: '8px', color: '#bcb4a8' }}>
+                      {details.typ === 'hufbearbeitung' ? details.pferd : 'Nicht erforderlich'}
+                    </span>
                   </div>
                   
                   <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
@@ -839,99 +939,56 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       borderRadius: '12px', 
                       fontSize: '12px',
                       marginLeft: '8px',
-                      backgroundColor: details.status === 'abgeschlossen' ? '#6c8a70' : 
-                                      details.status === 'vorschlag' ? '#b39563' : 
-                                      details.status === 'vorreserviert' ? '#8a7d90' :
-                                      details.status === 'bestätigt' ? '#5f7f86' : '#8a8f8b',
+                      backgroundColor: statusConfig.color,
                       color: 'white',
                       fontWeight: 'bold'
                     }}>
-                      {details.status === 'vorreserviert' ? 'Vorreserviert' : 
-                       details.status === 'bestätigt' ? 'Bestätigt' :
-                       details.status === 'abgeschlossen' ? 'Abgeschlossen' :
-                       details.status === 'vorschlag' ? 'Vorschlag' : details.status}
+                      {statusConfig.label}
                     </span>
                   </div>
                   
-                  {/* Status-Änderungs-Buttons - IMMER SICHTBAR */}
-                  <div style={{ 
-                    marginTop: '15px',
-                    marginBottom: '12px', 
-                    padding: '12px', 
-                    backgroundColor: '#3d4746', 
-                    borderRadius: '6px',
-                    border: '2px solid #55615f'
-                  }}>
-                    <div style={{ fontSize: '13px', marginBottom: '10px', color: '#f1ece4', fontWeight: 'bold' }}>
-                      🔄 Status ändern:
+                  {statusActions.length > 0 ? (
+                    <div style={{ 
+                      marginTop: '15px',
+                      marginBottom: '12px', 
+                      padding: '12px', 
+                      backgroundColor: '#3d4746', 
+                      borderRadius: '6px',
+                      border: '2px solid #55615f'
+                    }}>
+                      <div style={{ fontSize: '13px', marginBottom: '10px', color: '#f1ece4', fontWeight: 'bold' }}>
+                        🔄 Status ändern:
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {statusActions.map((action) => {
+                          const isCurrent = details.status === action.value;
+                          return (
+                            <button
+                              key={action.value}
+                              onClick={() => handleStatusChange(currentEvent.id, action.value, details.typ)}
+                              style={{
+                                padding: '6px 10px',
+                                fontSize: '11px',
+                                backgroundColor: isCurrent ? '#737873' : action.color,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: isCurrent ? 'not-allowed' : 'pointer',
+                                opacity: isCurrent ? 0.6 : 1
+                              }}
+                              disabled={isCurrent}
+                            >
+                              {action.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <button
-                        onClick={() => handleStatusChange(currentEvent.id, 'vorreserviert')}
-                        style={{
-                          padding: '6px 10px',
-                          fontSize: '11px',
-                          backgroundColor: details.status === 'vorreserviert' ? '#737873' : '#8a7d90',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: details.status === 'vorreserviert' ? 'not-allowed' : 'pointer',
-                          opacity: details.status === 'vorreserviert' ? 0.6 : 1
-                        }}
-                        disabled={details.status === 'vorreserviert'}
-                      >
-                        Vorreserviert
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(currentEvent.id, 'bestätigt')}
-                        style={{
-                          padding: '6px 10px',
-                          fontSize: '11px',
-                          backgroundColor: details.status === 'bestätigt' ? '#737873' : '#5f7f86',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: details.status === 'bestätigt' ? 'not-allowed' : 'pointer',
-                          opacity: details.status === 'bestätigt' ? 0.6 : 1
-                        }}
-                        disabled={details.status === 'bestätigt'}
-                      >
-                        Bestätigen
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(currentEvent.id, 'abgeschlossen')}
-                        style={{
-                          padding: '6px 10px',
-                          fontSize: '11px',
-                          backgroundColor: details.status === 'abgeschlossen' ? '#737873' : '#6c8a70',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: details.status === 'abgeschlossen' ? 'not-allowed' : 'pointer',
-                          opacity: details.status === 'abgeschlossen' ? 0.6 : 1
-                        }}
-                        disabled={details.status === 'abgeschlossen'}
-                      >
-                        Abschließen
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(currentEvent.id, 'vorschlag')}
-                        style={{
-                          padding: '6px 10px',
-                          fontSize: '11px',
-                          backgroundColor: details.status === 'vorschlag' ? '#737873' : '#b39563',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: details.status === 'vorschlag' ? 'not-allowed' : 'pointer',
-                          opacity: details.status === 'vorschlag' ? 0.6 : 1
-                        }}
-                        disabled={details.status === 'vorschlag'}
-                      >
-                        Als Vorschlag
-                      </button>
+                  ) : (
+                    <div style={{ marginTop: '12px', color: '#bcb4a8', fontSize: '12px' }}>
+                      Dieser Termin ist fix gesetzt und hat keinen Status-Workflow.
                     </div>
-                  </div>
+                  )}
                   
                   {details.bemerkung !== 'Keine Bemerkungen' && (
                     <div style={{ 
@@ -1612,11 +1669,11 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       const folgeText = folgeWochen > 0
                         ? `\nFolgetermin-Vorschlag in ${folgeWochen} Wochen wurde erstellt.`
                         : '';
-                      alert(`✅ Bearbeitung erfolgreich gespeichert!${folgeText}`);
+                      showNotice('success', `Bearbeitung erfolgreich gespeichert.${folgeText}`);
                     } catch (error) {
                       console.error('Fehler beim Speichern der Bearbeitung:', error);
                       const errorMessage = error instanceof Error ? error.message : String(error);
-                      alert(`❌ Fehler beim Speichern der Bearbeitung!\n\n${errorMessage}`);
+                      showNotice('error', `Fehler beim Speichern der Bearbeitung: ${errorMessage}`);
                     }
                   }}
                   style={{
