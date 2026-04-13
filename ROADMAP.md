@@ -1,6 +1,6 @@
 # Roadmap – Die Huf-Macherin App
 
-> **Zuletzt aktualisiert:** 13. April 2026 (Session 4 – Phase 3 abgeschlossen, Phase 8 Recherche)  
+> **Zuletzt aktualisiert:** 13. April 2026 (Session 6 – Phase 4 Google Calendar OAuth abgeschlossen)  
 > **App-Version:** 0.0.0 (Entwicklungsphase)  
 > **Stack:** Electron + React + Vite + TypeScript + SQLite (better-sqlite3)
 
@@ -11,7 +11,7 @@
 ```
 Kernfunktionen    ██████████████░░░░░░  72%
 Kalender          █████████████████░░░  84%
-Google Calendar   ████░░░░░░░░░░░░░░░░  20%
+Google Calendar   ████████████████░░░░  80%
 PWA / Synology    ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
@@ -128,6 +128,7 @@ PWA / Synology    ░░░░░░░░░░░░░░░░░░░░  
 - [x] Logo-Platzhalter links oben integriert
 - [x] Gedeckte Farbpalette statt knalliger Standardoptik
 - [x] Sidebar mit Bereichen für Erweiterungen, `Anleitungen` und `Einstellungen` (letzter Tab)
+- [x] **CSS-Refactor (Session 5):** `src/Kalender.css` neu erstellt – statische Inline-Styles in wiederverwendbare Klassen extrahiert (`.kal-modal-overlay`, `.kal-modal`, `.kal-form-input`, `.kal-form-label`, `.kal-btn-primary`, `.kal-btn-secondary`, `.kal-hint-info`, `.kal-hint-success`, u.a.)
 
 ### Export
 - [x] Kalender als PDF exportieren (html2canvas + jsPDF)
@@ -147,8 +148,8 @@ PWA / Synology    ░░░░░░░░░░░░░░░░░░░░  
 
 | # | Problem | Datei |
 |---|---------|-------|
-| B6 | `window.api.updateTerminStatus` in `window-api.d.ts` deklariert aber `dist/preload.js` hat es nicht mehr als Flat-API | window-api.d.ts |
-| B7 | Weitgehend behoben: Kalender, App und Pferdebereich nutzen In-App-Statusmeldungen. Offen bleibt nur der Google-OAuth-Code-`prompt` im Export-Flow. | Kalender.tsx / App.tsx / PferdeListe.tsx |
+| ~~B6~~ | ~~`window.api.updateTerminStatus` in `window-api.d.ts` deklariert aber `dist/preload.js` hat es nicht mehr als Flat-API~~ | ✅ **Behoben:** Flat-Alias entfernt, Kalender.tsx migriert auf `window.api.termine.updateStatus` |
+| ~~B7~~ | ~~Offen: Google-OAuth-Code-`prompt` im Export-Flow~~ | ✅ **Behoben:** In-App-Modal mit `showOAuthDialog`-State ersetzt `prompt()` vollständig |
 | B8 | Behoben: Legacy-Komponenten `TerminVerwaltung` und `TerminListe` aus aktivem Codepfad entfernt und gelöscht. | App.tsx |
 
 ---
@@ -237,16 +238,21 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 
 > Ziel: Alle Termin-Typen auf Wunsch in den Google Kalender übertragen
 
-- [ ] Echte OAuth2-Credentials einrichten (Google Cloud Console)
-  - Aktuell: Platzhalter `DEIN_CLIENT_ID` in `google-calendar.ts`
-  - Veraltete Redirect-URI `urn:ietf:wg:oauth:2.0:oob` ersetzen
-  - Loopback-Redirect (`http://127.0.0.1:PORT`) für Desktop-Apps verwenden
-- [ ] **Drei Google-Kalender** (oder Farb-Tags): Hufbearbeitung / Reitstunden / Persönlich
-- [ ] Einzeltermin aus Tooltip direkt exportieren
-- [ ] Exportierter Termin mit Uhrzeit (aktuell nur Datum)
-- [ ] `googleExportiert` Flag in DB (kein Doppel-Export)
-- [ ] Refresh-Token-Handling (automatische Token-Erneuerung)
-- [ ] Fehlerbehandlung bei fehlgeschlagenem Export
+- [x] **OAuth2 Loopback-Redirect** (`http://127.0.0.1:PORT`) ersetzt veraltetes `oob`
+  - Browser öffnet sich automatisch, kein Code mehr manuell kopieren
+  - Vollständiger blockierender Flow: Server startet → Browser öffnet → Redirect abgefangen → Token gespeichert
+- [x] **Credentials-Datei** statt Hardcoding: `google-oauth-credentials.json` in `%APPDATA%\hufmacherin-app\`
+  - Unterstützt simples Format `{client_id, client_secret}` und Google-Console-Format `{installed: {...}}`
+- [x] **Drei Google-Kalender** nach Typ:
+  - `hufbearbeitung` → `primary`
+  - `reitstunde` → Kalender „Reitstunden" (wird automatisch angelegt)
+  - `eigener_termin` → Kalender „Persönlich" (wird automatisch angelegt)
+- [x] **`googleExportiert` Flag** in DB (kein Doppel-Export; bereits exportierte Termine werden übersprungen)
+- [x] **Refresh-Token-Handling** (`client.on('tokens', ...)` – automatische Erneuerung + Persistenz)
+- [x] **OAuth-Dialog entfernt** (kein manuelles Code-Eingabe-Modal mehr nötig)
+- [x] **Exportierter Termin mit Uhrzeit** (dateTime mit Europe/Vienna, Fallback auf Datum ohne Zeit)
+- [ ] Einzeltermin aus Tooltip direkt exportieren (aktuell: Bulk-Export aller Termine)
+- [ ] Fehlerbehandlung bei fehlgeschlagenem Export verbessern (Retry, UI-Feedback pro Termin)
 
 ### Phase 4: PWA für Foto-Upload (Synology via Tailscale)
 
