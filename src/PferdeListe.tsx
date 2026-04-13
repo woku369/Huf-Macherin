@@ -141,6 +141,14 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
     return `${date.toLocaleDateString('de-AT')} ${date.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })}`;
   };
 
+  const getAmpel = (gruppe: PferdHistorieGruppe) => {
+    if (!gruppe.letzterTermin) return { color: '#8a8f8b', label: 'Kein Eintrag', dot: '⚪' };
+    const wochenSeit = Math.floor((Date.now() - new Date(gruppe.letzterTermin).getTime()) / (7 * 24 * 60 * 60 * 1000));
+    if (wochenSeit <= 6) return { color: '#6c8a70', label: `${wochenSeit} W. her`, dot: '🟢' };
+    if (wochenSeit <= 8) return { color: '#b39563', label: `${wochenSeit} W. her`, dot: '🟡' };
+    return { color: '#a55d4e', label: `${wochenSeit} W. her – fällig!`, dot: '🔴' };
+  };
+
   return (
     <div style={{ marginTop: 10, marginBottom: 20, padding: 20, border: '1px solid #ddd', borderRadius: 8, backgroundColor: '#f9f9f9' }}>
       <h3 style={{ marginTop: 0, color: '#2c3e50' }}>🐴 Pferde</h3>
@@ -340,7 +348,11 @@ export default function PferdeListe({ besitzerId }: { besitzerId: number }) {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                  <div style={{ fontWeight: 700, color: '#2f3636' }}>{gruppe.pferdName}</div>
+                  <div style={{ fontWeight: 700, color: '#2f3636', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{getAmpel(gruppe).dot}</span>
+                    <span>{gruppe.pferdName}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 'normal', color: getAmpel(gruppe).color }}>{getAmpel(gruppe).label}</span>
+                  </div>
                   <div style={{ fontSize: '12px', color: '#6d665c', display: 'flex', gap: '12px' }}>
                     <span>Letzter Termin: {gruppe.letzterTermin ? formatDatum(gruppe.letzterTermin) : '-'}</span>
                     <span>Ø Intervall: {gruppe.durchschnittIntervallWochen ? `${gruppe.durchschnittIntervallWochen} Wochen` : '-'}</span>

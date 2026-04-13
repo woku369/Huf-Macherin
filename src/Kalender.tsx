@@ -40,6 +40,8 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
   const [selectedEvent, setSelectedEvent] = useState<TerminEvent | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [tooltipBearbeitung, setTooltipBearbeitung] = useState<any[] | null>(null);
+  const [pendingDeleteTerminId, setPendingDeleteTerminId] = useState<number | null>(null);
   const [notice, setNotice] = useState<{ type: NoticeType; message: string } | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -232,6 +234,23 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
     };
     loadPferde();
   }, [createFormData.kundeId]);
+
+  // Lade Hufbearbeitungsnotizen wenn Tooltip auf abgeschlossene Hufbearbeitung öffnet
+  useEffect(() => {
+    if (showTooltip && selectedEvent) {
+      const typ = selectedEvent.resource?.typ || 'hufbearbeitung';
+      if (typ === 'hufbearbeitung' && selectedEvent.resource?.status === 'abgeschlossen') {
+        window.api.hufbearbeitung.list(selectedEvent.id)
+          .then(list => setTooltipBearbeitung(list))
+          .catch(() => setTooltipBearbeitung(null));
+      } else {
+        setTooltipBearbeitung(null);
+      }
+    } else {
+      setTooltipBearbeitung(null);
+      setPendingDeleteTerminId(null);
+    }
+  }, [showTooltip, selectedEvent?.id]);
 
   // Keine automatische Zeitberechnung mehr - Endzeit ist optional und manuell
 
@@ -605,6 +624,24 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
     }
   };
 
+  const handleDeleteTermin = (terminId: number) => {
+    setPendingDeleteTerminId(terminId);
+  };
+
+  const confirmDeleteTermin = async () => {
+    if (!pendingDeleteTerminId) return;
+    try {
+      await window.api.deleteTermin(pendingDeleteTerminId);
+      setPendingDeleteTerminId(null);
+      setShowTooltip(false);
+      setSelectedEvent(null);
+      showNotice('success', 'Termin wurde gelöscht.');
+      if (onTermineChange) await onTermineChange();
+    } catch (error) {
+      showNotice('error', `Fehler beim Löschen des Termins: ${String(error)}`);
+    }
+  };
+
   // Neues Pferd anlegen
   const handleCreateKunde = async () => {
     if (!kundeFormData.name.trim()) {
@@ -874,7 +911,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
             width: '300px',
             fontSize: '14px',
             border: '2px solid #3d4746',
-            maxHeight: '380px',
+            maxHeight: '520px',
             overflow: 'auto'
           }}
           onMouseEnter={() => setShowTooltip(true)}
@@ -1006,6 +1043,61 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       </div>
                       <div style={{ fontStyle: 'italic' }}>{details.bemerkung}</div>
                     </div>
+                  )}
+
+                  {/* Letzte Bearbeitungsnotiz für abgeschlossene Hufbearbeitungen */}
+                  {details.typ === 'hufbearbeitung' && details.status === 'abgeschlossen' && tooltipBearbeitung && tooltipBearbeitung.length > 0 && (
+                    <div style={{
+                      marginTop: '10px',
+                      fontSize: '13px',
+                      color: '#bcb4a8',
+                      backgroundColor: '#3d4746',
+                      padding: '8px',
+                      borderRadius: '4px',
+                      border: '1px solid #55615f'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ marginRight: '6px' }}>🔧</span>
+                        <strong>Bearbeitungsnotiz:</strong>
+                      </div>
+                      {tooltipBearbeitung[0].bearbeitung && (
+                        <div style={{ marginBottom: '3px' }}><strong>Bearbeitung:</strong> {tooltipBearbeitung[0].bearbeitung}</div>
+                      )}
+                      {tooltipBearbeitung[0].bemerkungen && (
+                        <div><strong>Notiz:</strong> {tooltipBearbeitung[0].bemerkungen}</div>
+                      )}
+                      {!tooltipBearbeitung[0].bearbeitung && !tooltipBearbeitung[0].bemerkungen && (
+                        <div style={{ fontStyle: 'italic' }}>Keine Notiz hinterlegt.</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Termin löschen */}
+                <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #3d4746' }}>
+                  {pendingDeleteTerminId === currentEvent.id ? (
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '12px', color: '#e8a49a' }}>Termin wirklich löschen?</span>
+                      <button
+                        onClick={confirmDeleteTermin}
+                        style={{ padding: '4px 10px', fontSize: '11px', backgroundColor: '#a55d4e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        Ja, löschen
+                      </button>
+                      <button
+                        onClick={() => setPendingDeleteTerminId(null)}
+                        style={{ padding: '4px 10px', fontSize: '11px', backgroundColor: '#737873', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        Abbrechen
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleDeleteTermin(currentEvent.id)}
+                      style={{ padding: '5px 12px', fontSize: '12px', backgroundColor: 'transparent', color: '#e8a49a', border: '1px solid #8b5e60', borderRadius: '4px', cursor: 'pointer', width: '100%' }}
+                    >
+                      🗑️ Termin löschen
+                    </button>
                   )}
                 </div>
                 
