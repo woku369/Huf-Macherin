@@ -63,9 +63,8 @@ declare global {
       updateTermin: (termin: Termin) => Promise<boolean>;
       listAlleTermine: () => Promise<any[]>;
       googleLogin: () => Promise<boolean>;
-      googleAuthCode: (code: string) => Promise<boolean>;
       googleIsLoggedIn: () => Promise<boolean>;
-      googleExportTermin: (termin: { titel: string; bemerkung?: string; datum: string; }) => Promise<boolean>;
+      googleExportTermin: (termin: { terminId: number; titel: string; bemerkung?: string; datum: string; ende?: string; typ?: string; }) => Promise<boolean>;
       hufbearbeitung: {
         add: (bearbeitung: Hufbearbeitung) => Promise<{ success: boolean; id?: number }>;
         list: (terminId: number) => Promise<Hufbearbeitung[]>;

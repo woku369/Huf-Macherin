@@ -230,7 +230,7 @@ ipcMain.handle('kunden:history', (_event, besitzerId) => {
 ipcMain.handle('alleTermine:list', () => {
     const stmt = db.prepare(`
     SELECT termine.id, termine.datum, termine.ende, termine.bemerkung, termine.rechnung, termine.status, termine.hufbemerkungen,
-           termine.typ, termine.titelManuell, termine.kundeId,
+           termine.typ, termine.titelManuell, termine.kundeId, termine.googleExportiert,
            pferde.name as pferdName,
            COALESCE(kunden_pferd.name, kunden_direkt.name) as besitzerName,
            COALESCE(kunden_pferd.vorname, kunden_direkt.vorname) as besitzerVorname

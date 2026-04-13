@@ -118,11 +118,6 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
     bemerkung: '',
     titelManuell: '',
   });
-  // Google OAuth Eingabe-Dialog
-  const [showOAuthDialog, setShowOAuthDialog] = useState(false);
-  const [oauthCode, setOauthCode] = useState('');
-  const [oauthPending, setOauthPending] = useState(false);
-
   const [bearbeitungsDaten, setBearbeitungsDaten] = useState({
     bearbeitung: '',
     bemerkungen: '',
@@ -528,43 +523,37 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
     try {
       const isLoggedIn = await window.api.googleIsLoggedIn();
       if (!isLoggedIn) {
+        showNotice('info', 'Browser wird geöffnet – bitte Google-Anmeldung im Browser abschließen...');
         await window.api.googleLogin();
-        // Kein prompt() – stattdessen In-App-Dialog
-        setOauthCode('');
-        setShowOAuthDialog(true);
-        return; // Export läuft weiter nach OAuth-Bestätigung
+        showNotice('success', 'Google-Anmeldung erfolgreich.');
       }
       await doGoogleExport();
     } catch (error) {
-      showNotice('error', `Fehler beim Export: ${String(error)}`);
-    }
-  };
-
-  const handleOAuthSubmit = async () => {
-    if (!oauthCode.trim()) return;
-    setOauthPending(true);
-    try {
-      await window.api.googleAuthCode(oauthCode.trim());
-      setShowOAuthDialog(false);
-      setOauthCode('');
-      await doGoogleExport();
-    } catch (error) {
-      showNotice('error', `Fehler bei der Google-Anmeldung: ${String(error)}`);
-    } finally {
-      setOauthPending(false);
+      showNotice('error', `Fehler: ${String(error)}`);
     }
   };
 
   const doGoogleExport = async () => {
     try {
+      let exported = 0;
+      let skipped  = 0;
       for (const t of termine) {
+        if (t.googleExportiert) { skipped++; continue; }
         await window.api.googleExportTermin({
-          titel: t.titel || t.titelText || t.beschreibung || t.pferdName || 'Termin',
+          terminId: t.id,
+          titel: t.titelManuell || t.pferdName || t.besitzerName || 'Termin',
           bemerkung: t.bemerkung,
           datum: t.datum,
+          ende: t.ende,
+          typ: t.typ || 'hufbearbeitung',
         });
+        exported++;
       }
-      showNotice('success', 'Alle Termine wurden an Google Kalender übertragen.');
+      const msg = skipped > 0
+        ? `${exported} Termin(e) exportiert, ${skipped} bereits exportiert (übersprungen).`
+        : `${exported} Termin(e) an Google Kalender übertragen.`;
+      showNotice('success', msg);
+      if (onTermineChange) await onTermineChange();
     } catch (error) {
       showNotice('error', `Fehler beim Export: ${String(error)}`);
     }
@@ -1846,53 +1835,6 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   Abbrechen
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Google OAuth In-App Dialog */}
-      {showOAuthDialog && (
-        <div
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}
-          onClick={() => !oauthPending && setShowOAuthDialog(false)}
-        >
-          <div
-            style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', width: '420px', boxShadow: '0 12px 48px rgba(0,0,0,0.3)', border: '1px solid #e1e8ed' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ margin: '0 0 8px 0', color: '#2f3636', fontSize: '18px', fontWeight: 'bold' }}>
-              📅 Google Kalender verbinden
-            </h3>
-            <p style={{ margin: '0 0 16px 0', color: '#6d665c', fontSize: '13px' }}>
-              Google hat einen Autorisierungscode gesendet. Bitte kopiere ihn hier hinein.
-            </p>
-            <input
-              type="text"
-              value={oauthCode}
-              onChange={(e) => setOauthCode(e.target.value)}
-              placeholder="4/0AX4XfWh..."
-              autoFocus
-              style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', marginBottom: '14px' }}
-              onKeyDown={(e) => e.key === 'Enter' && handleOAuthSubmit()}
-              onFocus={(e) => (e.target.style.borderColor = '#5f7f86')}
-              onBlur={(e) => (e.target.style.borderColor = '#e1e8ed')}
-            />
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={handleOAuthSubmit}
-                disabled={oauthPending || !oauthCode.trim()}
-                style={{ flex: 1, padding: '10px', backgroundColor: '#4285f4', color: 'white', border: 'none', borderRadius: '6px', cursor: oauthPending ? 'wait' : 'pointer', fontSize: '14px', fontWeight: 'bold' }}
-              >
-                {oauthPending ? '⏳ Verbinden...' : '✓ Bestätigen'}
-              </button>
-              <button
-                onClick={() => setShowOAuthDialog(false)}
-                disabled={oauthPending}
-                style={{ padding: '10px 20px', backgroundColor: '#e8e4de', color: '#2f3636', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}
-              >
-                Abbrechen
-              </button>
             </div>
           </div>
         </div>

@@ -126,6 +126,12 @@ function initDb() {
   } catch (e) {
     // Spalte existiert bereits
   }
+
+  try {
+    db.exec(`ALTER TABLE termine ADD COLUMN googleExportiert INTEGER DEFAULT 0;`);
+  } catch (e) {
+    // Spalte existiert bereits
+  }
 }
 
 // Hufbearbeitung-Funktionen

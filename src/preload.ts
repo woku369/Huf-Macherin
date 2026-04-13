@@ -36,4 +36,9 @@ contextBridge.exposeInMainWorld('api', {
     updateStatus: (terminId: number, status: string) => ipcRenderer.invoke('termine:updateStatus', terminId, status),
     abschliessen: (terminId: number, folgeWochen: number) => ipcRenderer.invoke('termine:abschliessen', terminId, folgeWochen),
   },
+
+  // Google Calendar
+  googleLogin: () => ipcRenderer.invoke('google:login'),
+  googleIsLoggedIn: () => ipcRenderer.invoke('google:isLoggedIn'),
+  googleExportTermin: (termin: any) => ipcRenderer.invoke('google:exportTermin', termin),
 });
