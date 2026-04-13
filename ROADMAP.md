@@ -1,6 +1,6 @@
 # Roadmap – Die Huf-Macherin App
 
-> **Zuletzt aktualisiert:** 13. April 2026 (Session 4)  
+> **Zuletzt aktualisiert:** 13. April 2026 (Session 4 – Phase 3 abgeschlossen, Phase 8 Recherche)  
 > **App-Version:** 0.0.0 (Entwicklungsphase)  
 > **Stack:** Electron + React + Vite + TypeScript + SQLite (better-sqlite3)
 
@@ -294,6 +294,79 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 - [ ] Rechnungs-PDF generieren
 - [ ] Erlöse-Übersicht / einfache Statistik
 - [ ] Export für Buchhaltung (CSV)
+
+### Phase 8: Intelligente Huf-Dokumentation (KI-gestützt, inspiriert von LTZ & Co.)
+
+> **Zur Diskussion** – noch kein Umsetzungsbeschluss.  
+> Recherche-Grundlage: LTZ Huf-App (Dr. Michael Zanger), Huf-ID (HoofIDGBR), Happie Horse (Animalytics), horse+ (KADACON).
+
+---
+
+#### Referenz-Apps im Überblick
+
+| App | Plattform | Schwerpunkt | Relevanz für uns |
+|-----|-----------|-------------|-----------------|
+| **LTZ Huf-App** (Dr. Michael Zanger) | Android ≥14 | Hufzustand analysieren, Hufpass, Lernplattform | Hoch – Hufpass-Konzept & Foto-Analyse |
+| **Huf-ID** (HoofIDGBR) | Android/iOS | Vorher/Nachher-Fotoanalyse mit Markierungen, Röntgen | Hoch – Vergleichsfotos mit Overlay |
+| **Happie Horse** (Animalytics) | Android/iOS | Ganzheitliches Pferde-Management, Gesundheit, Training | Mittel – Erinnerungen & Gesundheitslog |
+| **horse+** (KADACON) | Android/iOS | Reiterhof-Verwaltung, Stall ↔ Einsteller-Kommunikation | Niedrig – B2B-Stall, kein Hufpflege-Fokus |
+
+---
+
+#### LTZ Huf-App – Funktionsumfang (Stand April 2026)
+
+- **Hufzustand-Analyse**: Prüfung ob Huf zu steil/flach, Stabilitäts- & Belastbarkeitsbewertung, Stresserkennung
+- **Erziehungs-/Bearbeitungstipps**: automatisch je nach erkanntem Zustand
+- **Hufpass**: alle Analysen und Daten strukturiert je Pferd gespeichert
+- **3D-Huf-Vermessung**: selbst vermessen, frei drehbar (neu, April 2026)
+- **Lernplattform**: Audios (Anatomie, Huf), Videos (Bearbeitungspraxis), Online-Coachings
+- **24/7 Wissens-Chat**
+- **Therapeuten-Tipps** (weiterführend)
+- **Abo-Modell**: 7 Tage kostenlos, dann In-App-Kauf
+
+---
+
+#### Was wir bereits haben (Abgleich)
+
+| LTZ-Funktion | Status in unserer App |
+|---|---|
+| Terminplanung & Status-Workflow | ✅ vollständig |
+| Bearbeitungsnotizen pro Termin | ✅ vorhanden |
+| Bearbeitungshistorie mit Intervallen | ✅ vorhanden |
+| Folgetermin-Vorschlag | ✅ vorhanden |
+| Ampelhinweis (Intervall-Überwachung) | ✅ vorhanden |
+| Foto-Dokumentation strukturiert | ⏳ Phase 5 geplant |
+| Vorher/Nachher-Vergleich | ⏳ Phase 5 geplant |
+| Hufpass (strukturierter Befund) | ❌ fehlt |
+| Hufzustand-Klassifizierung | ❌ fehlt |
+| KI-Analyse / Bildauswertung | ❌ fehlt (Langfrist) |
+
+---
+
+#### Kandidaten für Integration (zur Diskussion)
+
+**Realistisch, hoher Nutzen:**
+- [ ] **Hufpass-Eintrag** pro Termin: standardisiertes Feld für Befund (z.B. Hufwinkel, Trachtenstand, Auffälligkeiten) → ergänzt das bestehende Freitextfeld
+- [ ] **Vorher/Nachher-Fotoansicht** in Pferdehistorie: zwei Fotos desselben Pferdes nebeneinander (zeitlich oder Links/Rechts-Vergleich) – baut auf Phase 5 auf
+
+**Mittelfristig, nach Phase 5 (Foto-Upload):**
+- [ ] **Bild-Overlay-Markierungen**: farbige Punkte/Linien auf Huffoto einzeichnen (Hufwandlinie, Rotationspunkt) – ähnlich Huf-ID, aber ohne Röntgen
+- [ ] **PDF-Export Hufpass**: pro Pferd, mit Verlaufsfoto + Notizen – als Übergabedokument an Tierarzt oder Kunden
+
+**Langfristig / Vision (kein konkreter Plan):**
+- [ ] KI-gestützte Hufanalyse (Winkelmessung, Symmetrievergleich) – hoher Aufwand, benötigt Trainingsdaten
+- [ ] Integration mit Tierarzt-Befunden oder Röntgenbildern
+
+---
+
+#### Abgrenzung: Was wir bewusst nicht machen
+
+- Lernplattform / Videos / Coachings (kein Kerngeschäft)
+- Fruktan-Risiko, Gangarten-Sensorik, Trainingsplanung (horse management ≠ Hufpflege-Tool)
+- Stall-Management für Einsteller (horse+, zu breiter B2B-Scope)
+- Abo-Modell / Cloud-Sync (App bleibt lokal, DSGVO-sicher)
+
+---
 
 ### Phase 7: WhatsApp-Integration (Zukunft)
 - [ ] Beweis-Foto nach Bearbeitung automatisch senden
