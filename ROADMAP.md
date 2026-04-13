@@ -1,6 +1,6 @@
 # Roadmap – Die Huf-Macherin App
 
-> **Zuletzt aktualisiert:** 10. April 2026 (Session 3)  
+> **Zuletzt aktualisiert:** 13. April 2026 (Session 4)  
 > **App-Version:** 0.0.0 (Entwicklungsphase)  
 > **Stack:** Electron + React + Vite + TypeScript + SQLite (better-sqlite3)
 
@@ -214,7 +214,7 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 #### UI-Änderungen
 - [x] Termin-Dialog: Typ-Auswahl am Anfang (schaltet Felder um)
 - [x] Kalender: Farbcodierung für Reitstunde + Eigener Termin ergänzt
-- [ ] Tooltip: Anzeige und Status-Buttons passend zum Typ
+- [x] Tooltip: Anzeige und Status-Buttons passend zum Typ
 - [x] Status-Farbgebung: eigene Farben pro Typ
 - [x] Folgetermin-Logik: nur bei Hufbearbeitung
 - [ ] Google Calendar Export: Typ → Calendar-Kategorie
@@ -224,11 +224,12 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 ### Phase 3: Pferde-Historie & Bearbeitungs-Übersicht
 
 - [x] **PferdHistorie (Basis):** Chronologische Historie pro Pferd in der Kundenansicht (inkl. Intervallanzeige und Bemerkungen)
-- [ ] **Bearbeitungsnotizen** beim Termin im Tooltip anzeigen
+- [x] **Bearbeitungsnotizen** beim Termin im Tooltip anzeigen
+- [x] **Ampelhinweis** je Pferd in der Historie (🟢 ≤6 W. / 🟡 7–8 W. / 🔴 >8 W.)
+- [x] **Termin löschen** direkt im Tooltip (2-Schritt-Bestätigung)
+- [ ] **Termin bearbeiten** (Edit-Modal)
 - [ ] **Österreichische Feiertage** im Kalender markieren
 - [ ] Kundenverwaltung: Pferde-Übersicht mit letzter Bearbeitungszeit
-- [ ] Termin bearbeiten (Edit-Modal)
-- [ ] Termin löschen direkt im Tooltip
 
 ---
 

@@ -29,6 +29,7 @@ interface Termin {
   ende?: string;
   status?: string;
   hufbemerkungen?: any;
+  titelManuell?: string | null;
 }
 
 interface Hufbearbeitung {
@@ -186,9 +187,10 @@ ipcMain.handle('termine:update', async (_event: any, termin: Termin) => {
   const nextHufbemerkungen = termin.hufbemerkungen === undefined
     ? existing.hufbemerkungen
     : (termin.hufbemerkungen ? JSON.stringify(termin.hufbemerkungen) : null);
+  const nextTitelManuell = termin.titelManuell !== undefined ? termin.titelManuell : existing.titelManuell;
 
-  const stmt = db.prepare('UPDATE termine SET datum = ?, rechnung = ?, bemerkung = ?, ende = ?, status = ?, hufbemerkungen = ? WHERE id = ?');
-  stmt.run(nextDatum, nextRechnung, nextBemerkung, nextEnde, nextStatus, nextHufbemerkungen, termin.id);
+  const stmt = db.prepare('UPDATE termine SET datum = ?, rechnung = ?, bemerkung = ?, ende = ?, status = ?, hufbemerkungen = ?, titelManuell = ? WHERE id = ?');
+  stmt.run(nextDatum, nextRechnung, nextBemerkung, nextEnde, nextStatus, nextHufbemerkungen, nextTitelManuell, termin.id);
 
   // Folgetermin-Logik liegt ausschließlich in `termine:abschliessen`, damit dort der gewählte Wochenwert verwendet wird.
   return { ...existing, ...termin, status: nextStatus };

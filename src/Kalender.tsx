@@ -46,9 +46,21 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   
-  // Bearbeitungsmaske
+  // Hufbearbeitungs-Abschlussmaske
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingTermin, setEditingTermin] = useState<any>(null);
+
+  // Termin-Edit-Modal (allgemein)
+  const [showTerminEditModal, setShowTerminEditModal] = useState(false);
+  const [terminEditData, setTerminEditData] = useState({
+    id: 0,
+    typ: 'hufbearbeitung' as 'hufbearbeitung' | 'reitstunde' | 'eigener_termin',
+    datum: '',
+    uhrzeit: '09:00',
+    bisUhrzeit: '',
+    bemerkung: '',
+    titelManuell: '',
+  });
   const [bearbeitungsDaten, setBearbeitungsDaten] = useState({
     bearbeitung: '',
     bemerkungen: '',
@@ -624,6 +636,54 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
     }
   };
 
+  const handleOpenTerminEdit = (event: TerminEvent) => {
+    const r = event.resource;
+    const start = new Date(r.datum);
+    const ende = r.ende ? new Date(r.ende) : null;
+    setTerminEditData({
+      id: r.id,
+      typ: getTerminTyp(r),
+      datum: format(start, 'yyyy-MM-dd'),
+      uhrzeit: format(start, 'HH:mm'),
+      bisUhrzeit: ende ? format(ende, 'HH:mm') : '',
+      bemerkung: r.bemerkung || '',
+      titelManuell: r.titelManuell || '',
+    });
+    setShowTerminEditModal(true);
+    setShowTooltip(false);
+    setSelectedEvent(null);
+  };
+
+  const handleSaveTerminEdit = async () => {
+    try {
+      const [h, m] = terminEditData.uhrzeit.split(':');
+      const newStart = new Date(terminEditData.datum);
+      newStart.setHours(parseInt(h), parseInt(m), 0, 0);
+
+      let newEnde: string | null = null;
+      if (terminEditData.bisUhrzeit.trim()) {
+        const [eh, em] = terminEditData.bisUhrzeit.split(':');
+        const e = new Date(terminEditData.datum);
+        e.setHours(parseInt(eh), parseInt(em), 0, 0);
+        newEnde = e.toISOString();
+      }
+
+      await window.api.updateTermin({
+        id: terminEditData.id,
+        datum: newStart.toISOString(),
+        ende: newEnde,
+        bemerkung: terminEditData.bemerkung,
+        titelManuell: terminEditData.titelManuell || null,
+      } as any);
+
+      setShowTerminEditModal(false);
+      showNotice('success', 'Termin wurde gespeichert.');
+      if (onTermineChange) await onTermineChange();
+    } catch (error) {
+      showNotice('error', `Fehler beim Speichern: ${String(error)}`);
+    }
+  };
+
   const handleDeleteTermin = (terminId: number) => {
     setPendingDeleteTerminId(terminId);
   };
@@ -1073,8 +1133,14 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   )}
                 </div>
 
-                {/* Termin löschen */}
-                <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #3d4746' }}>
+                {/* Termin bearbeiten + löschen */}
+                <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #3d4746', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <button
+                    onClick={() => handleOpenTerminEdit(currentEvent)}
+                    style={{ padding: '5px 12px', fontSize: '12px', backgroundColor: '#4d6a62', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', width: '100%' }}
+                  >
+                    ✏️ Termin bearbeiten
+                  </button>
                   {pendingDeleteTerminId === currentEvent.id ? (
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '12px', color: '#e8a49a' }}>Termin wirklich löschen?</span>
@@ -1797,6 +1863,107 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               color: '#155724'
             }}>
               <strong>✅ Hinweis:</strong> Nach dem Speichern wird automatisch ein Folgetermin-Vorschlag erstellt und der Termin als "abgeschlossen" markiert.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal für Termin bearbeiten */}
+      {showTerminEditModal && (
+        <div
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}
+          onClick={() => setShowTerminEditModal(false)}
+        >
+          <div
+            style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', width: '420px', maxHeight: '80vh', overflow: 'auto', boxShadow: '0 12px 48px rgba(0,0,0,0.3)', border: '1px solid #e1e8ed' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 20px 0', color: '#2f3636', fontSize: '20px', fontWeight: 'bold' }}>
+              ✏️ Termin bearbeiten
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+              {terminEditData.typ === 'eigener_termin' && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Titel</label>
+                  <input
+                    type="text"
+                    value={terminEditData.titelManuell}
+                    onChange={(e) => setTerminEditData(p => ({ ...p, titelManuell: e.target.value }))}
+                    style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                    onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
+                    onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Datum</label>
+                <input
+                  type="date"
+                  value={terminEditData.datum}
+                  onChange={(e) => setTerminEditData(p => ({ ...p, datum: e.target.value }))}
+                  style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                  onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
+                  onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Startzeit</label>
+                  <select
+                    value={terminEditData.uhrzeit}
+                    onChange={(e) => setTerminEditData(p => ({ ...p, uhrzeit: e.target.value }))}
+                    style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: 'white' }}
+                  >
+                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Endzeit (optional)</label>
+                  <select
+                    value={terminEditData.bisUhrzeit}
+                    onChange={(e) => setTerminEditData(p => ({ ...p, bisUhrzeit: e.target.value }))}
+                    style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: 'white' }}
+                  >
+                    <option value="">— keine —</option>
+                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Bemerkung</label>
+                <textarea
+                  value={terminEditData.bemerkung}
+                  onChange={(e) => setTerminEditData(p => ({ ...p, bemerkung: e.target.value }))}
+                  rows={3}
+                  style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }}
+                  onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
+                  onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                <button
+                  onClick={handleSaveTerminEdit}
+                  style={{ flex: 1, padding: '10px', backgroundColor: '#4d6a62', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#3f5953'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#4d6a62'}
+                >
+                  💾 Speichern
+                </button>
+                <button
+                  onClick={() => setShowTerminEditModal(false)}
+                  style={{ padding: '10px 20px', backgroundColor: '#e8e4de', color: '#2f3636', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#ddd8d2'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#e8e4de'}
+                >
+                  Abbrechen
+                </button>
+              </div>
             </div>
           </div>
         </div>
