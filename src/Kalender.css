@@ -1,0 +1,172 @@
+/* ============================================================
+   Kalender.css – Statische Styles für Kalender.tsx
+   Dynamische Styles (Farben von state, Positionierung per Maus) 
+   bleiben als inline style={{ ... }} in der TSX-Datei.
+   ============================================================ */
+
+/* ============================================================
+   Modal Layer – Overlay + Container
+   ============================================================ */
+
+.kal-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.kal-modal {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+  border: 1px solid #e1e8ed;
+}
+
+.kal-modal-header {
+  margin-bottom: 20px;
+}
+
+.kal-modal-title {
+  margin: 0 0 8px 0;
+  color: #2f3636;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.kal-modal-meta {
+  margin: 0;
+  color: #737873;
+  font-size: 14px;
+}
+
+/* ============================================================
+   Formulare – Layout
+   ============================================================ */
+
+.kal-form-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kal-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.kal-form-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+/* ============================================================
+   Formulare – Felder
+   ============================================================ */
+
+.kal-form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #2f3636;
+  font-size: 14px;
+}
+
+.kal-form-input,
+.kal-form-select,
+.kal-form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e1e8ed;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.kal-form-input:focus,
+.kal-form-select:focus,
+.kal-form-textarea:focus {
+  border-color: #5f7f86;
+}
+
+.kal-form-select {
+  background-color: white;
+}
+
+.kal-form-textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+
+.kal-btn-primary {
+  padding: 10px 20px;
+  background-color: #6c8a70;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.kal-btn-primary:hover:not(:disabled) {
+  background-color: #5d7863;
+}
+
+.kal-btn-secondary {
+  padding: 10px 20px;
+  background-color: #8a8f8b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.kal-btn-secondary:hover:not(:disabled) {
+  background-color: #737873;
+}
+
+/* ============================================================
+   Hinweis-Boxen
+   ============================================================ */
+
+.kal-hint-info {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #0c5460;
+}
+
+.kal-hint-success {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #e6ece4;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #155724;
+}

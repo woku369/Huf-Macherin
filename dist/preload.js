@@ -21,8 +21,6 @@ contextBridge.exposeInMainWorld('api', {
     deleteTermin: (id) => ipcRenderer.invoke('termine:delete', id),
     updateTermin: (termin) => ipcRenderer.invoke('termine:update', termin),
     listAlleTermine: () => ipcRenderer.invoke('alleTermine:list'),
-    // Flat-Alias für Kompatibilität
-    updateTerminStatus: (terminId, status) => ipcRenderer.invoke('termine:updateStatus', terminId, status),
     // Hufbearbeitung-API
     hufbearbeitung: {
         add: (bearbeitung) => ipcRenderer.invoke('hufbearbeitung:add', bearbeitung),

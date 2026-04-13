@@ -61,7 +61,6 @@ declare global {
       addMultipleTermine: (terminDaten: {pferdIds: number[], datum: string, ende?: string | null, bemerkung: string, titel?: string, status?: string}) => Promise<any[]>;
       deleteTermin: (id: number) => Promise<boolean>;
       updateTermin: (termin: Termin) => Promise<boolean>;
-      updateTerminStatus: (terminId: number, status: string) => Promise<boolean>;
       listAlleTermine: () => Promise<any[]>;
       googleLogin: () => Promise<boolean>;
       googleAuthCode: (code: string) => Promise<boolean>;

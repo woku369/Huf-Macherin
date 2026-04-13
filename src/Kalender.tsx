@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import './Kalender.css';
 import { format, parse, startOfWeek, getDay, getWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -117,6 +118,11 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
     bemerkung: '',
     titelManuell: '',
   });
+  // Google OAuth Eingabe-Dialog
+  const [showOAuthDialog, setShowOAuthDialog] = useState(false);
+  const [oauthCode, setOauthCode] = useState('');
+  const [oauthPending, setOauthPending] = useState(false);
+
   const [bearbeitungsDaten, setBearbeitungsDaten] = useState({
     bearbeitung: '',
     bemerkungen: '',
@@ -523,9 +529,34 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       const isLoggedIn = await window.api.googleIsLoggedIn();
       if (!isLoggedIn) {
         await window.api.googleLogin();
-        const code = prompt('Bitte den Google-Auth-Code eingeben:');
-        if (code) await window.api.googleAuthCode(code);
+        // Kein prompt() – stattdessen In-App-Dialog
+        setOauthCode('');
+        setShowOAuthDialog(true);
+        return; // Export läuft weiter nach OAuth-Bestätigung
       }
+      await doGoogleExport();
+    } catch (error) {
+      showNotice('error', `Fehler beim Export: ${String(error)}`);
+    }
+  };
+
+  const handleOAuthSubmit = async () => {
+    if (!oauthCode.trim()) return;
+    setOauthPending(true);
+    try {
+      await window.api.googleAuthCode(oauthCode.trim());
+      setShowOAuthDialog(false);
+      setOauthCode('');
+      await doGoogleExport();
+    } catch (error) {
+      showNotice('error', `Fehler bei der Google-Anmeldung: ${String(error)}`);
+    } finally {
+      setOauthPending(false);
+    }
+  };
+
+  const doGoogleExport = async () => {
+    try {
       for (const t of termine) {
         await window.api.googleExportTermin({
           titel: t.titel || t.titelText || t.beschreibung || t.pferdName || 'Termin',
@@ -686,7 +717,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       }
 
       // Alle anderen Status: sofort setzen
-      await window.api.updateTerminStatus(terminId, newStatus);
+      await window.api.termine.updateStatus(terminId, newStatus);
 
       // Tooltip schließen
       setShowTooltip(false);
@@ -1292,52 +1323,24 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       {/* Modal für Termin-Erstellung */}
       {showCreateForm && selectedDate && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000
-          }}
+          className="kal-modal-overlay"
           onClick={() => setShowCreateForm(false)}
         >
           <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              width: '450px',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
-              border: '1px solid #e1e8ed'
-            }}
+            className="kal-modal"
+            style={{ width: '450px' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ 
-                margin: '0 0 8px 0', 
-                color: '#2f3636', 
-                fontSize: '20px',
-                fontWeight: 'bold'
-              }}>
+            <div className="kal-modal-header">
+              <h3 className="kal-modal-title">
                 📅 Neuer Termin erstellen
               </h3>
-              <p style={{ 
-                margin: 0, 
-                color: '#737873', 
-                fontSize: '14px' 
-              }}>
+              <p className="kal-modal-meta">
                 Datum: {format(selectedDate, 'dd.MM.yyyy', { locale: de })}
               </p>
             </div>
 
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form className="kal-form-stacked">
 
               {/* Termin-Typ Auswahl */}
               <div>
@@ -1373,13 +1376,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontWeight: 'bold',
-                  color: '#2f3636',
-                  fontSize: '14px'
-                }}>
+                <label className="kal-form-label">
                   {createFormData.typ === 'eigener_termin' ? 'Titel *' : 'Titel (optional)'}
                 </label>
                 <input
@@ -1387,46 +1384,21 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   value={createFormData.titel}
                   onChange={(e) => setCreateFormData({...createFormData, titel: e.target.value})}
                   placeholder="z.B. Hufbearbeitung, Beratung, ..."
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '2px solid #e1e8ed',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box'
-                  }}
+                  className="kal-form-input"
                   onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="kal-form-grid-2">
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '6px', 
-                    fontWeight: 'bold',
-                    color: '#2f3636',
-                    fontSize: '14px'
-                  }}>
+                  <label className="kal-form-label">
                     Startzeit
                   </label>
                   <select
                     value={createFormData.uhrzeit}
                     onChange={(e) => setCreateFormData({...createFormData, uhrzeit: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '2px solid #e1e8ed',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s',
-                      boxSizing: 'border-box',
-                      backgroundColor: 'white'
-                    }}
+                    className="kal-form-select"
                     onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   >
@@ -1437,29 +1409,13 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '6px', 
-                    fontWeight: 'bold',
-                    color: '#2f3636',
-                    fontSize: '14px'
-                  }}>
+                  <label className="kal-form-label">
                     Endzeit (optional)
                   </label>
                   <select
                     value={createFormData.bisUhrzeit}
                     onChange={(e) => setCreateFormData({...createFormData, bisUhrzeit: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '2px solid #e1e8ed',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s',
-                      boxSizing: 'border-box',
-                      backgroundColor: 'white'
-                    }}
+                    className="kal-form-select"
                     onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   >
@@ -1474,30 +1430,15 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               {/* Kunden-Auswahl: nicht bei eigenem Termin */}
               {createFormData.typ !== 'eigener_termin' && (
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontWeight: 'bold',
-                  color: '#2f3636',
-                  fontSize: '14px'
-                }}>
+                <label className="kal-form-label">
                   Kunde *
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <select
                     value={createFormData.kundeId}
                     onChange={(e) => setCreateFormData({...createFormData, kundeId: e.target.value, ausgewaehltePferde: []})}
-                    style={{
-                      flexGrow: 1,
-                      padding: '10px 12px',
-                      border: '2px solid #e1e8ed',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s',
-                      boxSizing: 'border-box',
-                      backgroundColor: 'white'
-                    }}
+                    className="kal-form-select"
+                    style={{ flexGrow: 1, width: 'auto' }}
                     onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   >
@@ -1532,13 +1473,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               {/* Pferde-Auswahl: nur bei Hufbearbeitung und wenn Kunde gewählt */}
               {createFormData.typ === 'hufbearbeitung' && createFormData.kundeId && (
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '6px', 
-                    fontWeight: 'bold',
-                    color: '#2f3636',
-                    fontSize: '14px'
-                  }}>
+                  <label className="kal-form-label">
                     Pferde auswählen * ({createFormData.ausgewaehltePferde.length} ausgewählt)
                   </label>
                   
@@ -1640,13 +1575,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               )}
 
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontWeight: 'bold',
-                  color: '#2f3636',
-                  fontSize: '14px'
-                }}>
+                <label className="kal-form-label">
                   Bemerkung
                 </label>
                 <textarea
@@ -1654,79 +1583,31 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   onChange={(e) => setCreateFormData({...createFormData, bemerkung: e.target.value})}
                   placeholder="Zusätzliche Informationen..."
                   rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '2px solid #e1e8ed',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box',
-                    resize: 'vertical',
-                    fontFamily: 'inherit'
-                  }}
+                  className="kal-form-textarea"
                   onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
 
-              <div style={{ 
-                display: 'flex', 
-                gap: '12px', 
-                marginTop: '8px',
-                justifyContent: 'flex-end'
-              }}>
+              <div className="kal-form-footer">
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#8a8f8b',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#737873'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8a8f8b'}
+                  className="kal-btn-secondary"
                 >
                   Abbrechen
                 </button>
                 <button
                   type="button"
                   onClick={handleCreateTermin}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#6c8a70',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#5d7863'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6c8a70'}
+                  className="kal-btn-primary"
                 >
                   💾 Termin erstellen
                 </button>
               </div>
             </form>
 
-            <div style={{ 
-              marginTop: '16px', 
-              padding: '12px', 
-              backgroundColor: '#d1ecf1', 
-              border: '1px solid #bee5eb',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#0c5460'
-            }}>
+            <div className="kal-hint-info">
               <strong>ℹ️ Eingabehilfe:</strong> Geben Sie mindestens einen <strong>Kunden</strong> oder ein <strong>Pferd</strong> ein. Der Titel wird automatisch generiert, falls leer gelassen.
             </div>
           </div>
@@ -1736,67 +1617,29 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       {/* Bearbeitungsmaske für abgeschlossene Termine */}
       {showEditForm && editingTermin && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000
-          }}
+          className="kal-modal-overlay"
           onClick={() => setShowEditForm(false)}
         >
           <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              width: '500px',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
-              border: '1px solid #e1e8ed'
-            }}
+            className="kal-modal"
+            style={{ width: '500px' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ 
-                margin: '0 0 8px 0', 
-                color: '#2f3636', 
-                fontSize: '20px',
-                fontWeight: 'bold'
-              }}>
+            <div className="kal-modal-header">
+              <h3 className="kal-modal-title">
                 🐴 Hufbearbeitung dokumentieren
               </h3>
-              <p style={{ 
-                margin: 0, 
-                color: '#737873', 
-                fontSize: '14px' 
-              }}>
+              <p className="kal-modal-meta">
                 Kunde: {editingTermin.besitzerName} {editingTermin.besitzerVorname} • Pferd: {editingTermin.pferdName}
               </p>
-              <p style={{ 
-                margin: '4px 0 0 0', 
-                color: '#737873', 
-                fontSize: '14px' 
-              }}>
+              <p className="kal-modal-meta" style={{ marginTop: '4px' }}>
                 Termin: {format(new Date(editingTermin.datum), 'dd.MM.yyyy HH:mm', { locale: de })}
               </p>
             </div>
 
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form className="kal-form-stacked">
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontWeight: 'bold',
-                  color: '#2f3636',
-                  fontSize: '14px'
-                }}>
+                <label className="kal-form-label">
                   Bearbeitungsnotizen
                 </label>
                 <textarea
@@ -1804,47 +1647,20 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   rows={4}
                   value={bearbeitungsDaten.bearbeitung}
                   onChange={(e) => setBearbeitungsDaten(prev => ({ ...prev, bearbeitung: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '2px solid #e1e8ed',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box',
-                    resize: 'vertical',
-                    fontFamily: 'inherit'
-                  }}
+                  className="kal-form-textarea"
                   onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontWeight: 'bold',
-                  color: '#2f3636',
-                  fontSize: '14px'
-                }}>
+                <label className="kal-form-label">
                   Nächster Termin empfohlen in
                 </label>
                 <select
                   value={bearbeitungsDaten.naechsterTermin}
                   onChange={(e) => setBearbeitungsDaten(prev => ({ ...prev, naechsterTermin: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '2px solid #e1e8ed',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box',
-                    backgroundColor: 'white'
-                  }}
+                  className="kal-form-select"
                   onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 >
@@ -1856,12 +1672,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                 </select>
               </div>
 
-              <div style={{ 
-                display: 'flex', 
-                gap: '12px', 
-                marginTop: '8px',
-                justifyContent: 'flex-end'
-              }}>
+              <div className="kal-form-footer">
                 <button
                   type="button"
                   onClick={() => {
@@ -1873,19 +1684,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       naechsterTermin: '4'
                     });
                   }}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#8a8f8b',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#737873'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8a8f8b'}
+                  className="kal-btn-secondary"
                 >
                   Abbrechen
                 </button>
@@ -1936,34 +1735,14 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                       showNotice('error', `Fehler beim Speichern der Bearbeitung: ${errorMessage}`);
                     }
                   }}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#6c8a70',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#5d7863'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6c8a70'}
+                  className="kal-btn-primary"
                 >
                   💾 Bearbeitung speichern
                 </button>
               </div>
             </form>
 
-            <div style={{ 
-              marginTop: '16px', 
-              padding: '12px', 
-              backgroundColor: '#e6ece4', 
-              border: '1px solid #c3e6cb',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#155724'
-            }}>
+            <div className="kal-hint-success">
               <strong>✅ Hinweis:</strong> Nach dem Speichern wird automatisch ein Folgetermin-Vorschlag erstellt und der Termin als "abgeschlossen" markiert.
             </div>
           </div>
@@ -1973,11 +1752,12 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       {/* Modal für Termin bearbeiten */}
       {showTerminEditModal && (
         <div
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}
+          className="kal-modal-overlay"
           onClick={() => setShowTerminEditModal(false)}
         >
           <div
-            style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', width: '420px', maxHeight: '80vh', overflow: 'auto', boxShadow: '0 12px 48px rgba(0,0,0,0.3)', border: '1px solid #e1e8ed' }}
+            className="kal-modal"
+            style={{ width: '420px' }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: '0 0 20px 0', color: '#2f3636', fontSize: '20px', fontWeight: 'bold' }}>
@@ -1988,12 +1768,12 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
 
               {terminEditData.typ === 'eigener_termin' && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Titel</label>
+                  <label className="kal-form-label">Titel</label>
                   <input
                     type="text"
                     value={terminEditData.titelManuell}
                     onChange={(e) => setTerminEditData(p => ({ ...p, titelManuell: e.target.value }))}
-                    style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                    className="kal-form-input"
                     onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   />
@@ -2001,12 +1781,12 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               )}
 
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Datum</label>
+                <label className="kal-form-label">Datum</label>
                 <input
                   type="date"
                   value={terminEditData.datum}
                   onChange={(e) => setTerminEditData(p => ({ ...p, datum: e.target.value }))}
-                  style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
+                  className="kal-form-input"
                   onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
@@ -2014,21 +1794,21 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Startzeit</label>
+                  <label className="kal-form-label">Startzeit</label>
                   <select
                     value={terminEditData.uhrzeit}
                     onChange={(e) => setTerminEditData(p => ({ ...p, uhrzeit: e.target.value }))}
-                    style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: 'white' }}
+                    className="kal-form-select"
                   >
                     {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Endzeit (optional)</label>
+                  <label className="kal-form-label">Endzeit (optional)</label>
                   <select
                     value={terminEditData.bisUhrzeit}
                     onChange={(e) => setTerminEditData(p => ({ ...p, bisUhrzeit: e.target.value }))}
-                    style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', backgroundColor: 'white' }}
+                    className="kal-form-select"
                   >
                     <option value="">— keine —</option>
                     {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
@@ -2037,12 +1817,12 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Bemerkung</label>
+                <label className="kal-form-label">Bemerkung</label>
                 <textarea
                   value={terminEditData.bemerkung}
                   onChange={(e) => setTerminEditData(p => ({ ...p, bemerkung: e.target.value }))}
                   rows={3}
-                  style={{ width: '100%', padding: '9px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }}
+                  className="kal-form-textarea"
                   onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
@@ -2071,85 +1851,113 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
         </div>
       )}
 
+      {/* Google OAuth In-App Dialog */}
+      {showOAuthDialog && (
+        <div
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}
+          onClick={() => !oauthPending && setShowOAuthDialog(false)}
+        >
+          <div
+            style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', width: '420px', boxShadow: '0 12px 48px rgba(0,0,0,0.3)', border: '1px solid #e1e8ed' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 8px 0', color: '#2f3636', fontSize: '18px', fontWeight: 'bold' }}>
+              📅 Google Kalender verbinden
+            </h3>
+            <p style={{ margin: '0 0 16px 0', color: '#6d665c', fontSize: '13px' }}>
+              Google hat einen Autorisierungscode gesendet. Bitte kopiere ihn hier hinein.
+            </p>
+            <input
+              type="text"
+              value={oauthCode}
+              onChange={(e) => setOauthCode(e.target.value)}
+              placeholder="4/0AX4XfWh..."
+              autoFocus
+              style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box', marginBottom: '14px' }}
+              onKeyDown={(e) => e.key === 'Enter' && handleOAuthSubmit()}
+              onFocus={(e) => (e.target.style.borderColor = '#5f7f86')}
+              onBlur={(e) => (e.target.style.borderColor = '#e1e8ed')}
+            />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={handleOAuthSubmit}
+                disabled={oauthPending || !oauthCode.trim()}
+                style={{ flex: 1, padding: '10px', backgroundColor: '#4285f4', color: 'white', border: 'none', borderRadius: '6px', cursor: oauthPending ? 'wait' : 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+              >
+                {oauthPending ? '⏳ Verbinden...' : '✓ Bestätigen'}
+              </button>
+              <button
+                onClick={() => setShowOAuthDialog(false)}
+                disabled={oauthPending}
+                style={{ padding: '10px 20px', backgroundColor: '#e8e4de', color: '#2f3636', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal für Kunden-Anlegen */}
       {showKundeForm && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000
-          }}
+          className="kal-modal-overlay"
           onClick={() => setShowKundeForm(false)}
         >
           <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              width: '400px',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
-              border: '1px solid #e1e8ed'
-            }}
+            className="kal-modal"
+            style={{ width: '400px' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ margin: '0 0 8px 0', color: '#2f3636', fontSize: '20px', fontWeight: 'bold' }}>
+            <div className="kal-modal-header">
+              <h3 className="kal-modal-title">
                 👤 Neuen Kunden anlegen
               </h3>
             </div>
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <form className="kal-form-stacked">
+              <div className="kal-form-grid-2">
                 <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Nachname *</label>
+                  <label className="kal-form-label">Nachname *</label>
                   <input
                     type="text"
                     value={kundeFormData.name}
                     onChange={(e) => setKundeFormData({...kundeFormData, name: e.target.value})}
                     placeholder="z.B. Müller"
-                    style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                    className="kal-form-input"
                     onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Vorname</label>
+                  <label className="kal-form-label">Vorname</label>
                   <input
                     type="text"
                     value={kundeFormData.vorname}
                     onChange={(e) => setKundeFormData({...kundeFormData, vorname: e.target.value})}
                     placeholder="z.B. Anna"
-                    style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                    className="kal-form-input"
                     onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   />
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: '#2f3636', fontSize: '14px' }}>Adresse</label>
+                <label className="kal-form-label">Adresse</label>
                 <input
                   type="text"
                   value={kundeFormData.adresse}
                   onChange={(e) => setKundeFormData({...kundeFormData, adresse: e.target.value})}
                   placeholder="z.B. Hauptstraße 5, 4020 Linz"
-                  style={{ width: '100%', padding: '10px 12px', border: '2px solid #e1e8ed', borderRadius: '6px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                  className="kal-form-input"
                   onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px', justifyContent: 'flex-end' }}>
+              <div className="kal-form-footer">
                 <button
                   type="button"
                   onClick={() => setShowKundeForm(false)}
-                  style={{ padding: '10px 20px', backgroundColor: '#8a8f8b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                  className="kal-btn-secondary"
                 >
                   Abbrechen
                 </button>
@@ -2169,60 +1977,26 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
       {/* Modal für Pferd-Anlegen */}
       {showPferdForm && createFormData.kundeId && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000
-          }}
+          className="kal-modal-overlay"
           onClick={() => setShowPferdForm(false)}
         >
           <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              width: '400px',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              boxShadow: '0 12px 48px rgba(0,0,0,0.3)',
-              border: '1px solid #e1e8ed'
-            }}
+            className="kal-modal"
+            style={{ width: '400px' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ 
-                margin: '0 0 8px 0', 
-                color: '#2f3636', 
-                fontSize: '20px',
-                fontWeight: 'bold'
-              }}>
+            <div className="kal-modal-header">
+              <h3 className="kal-modal-title">
                 🐴 Neues Pferd anlegen
               </h3>
-              <p style={{ 
-                margin: 0, 
-                color: '#737873', 
-                fontSize: '14px' 
-              }}>
+              <p className="kal-modal-meta">
                 Für: {kunden.find((k: any) => k.id === parseInt(createFormData.kundeId))?.name || 'Unbekannt'}
               </p>
             </div>
 
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form className="kal-form-stacked">
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontWeight: 'bold',
-                  color: '#2f3636',
-                  fontSize: '14px'
-                }}>
+                <label className="kal-form-label">
                   Name des Pferdes *
                 </label>
                 <input
@@ -2231,30 +2005,15 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   onChange={(e) => setPferdFormData({...pferdFormData, name: e.target.value})}
                   placeholder="z.B. Luna, Max, Bella..."
                   required
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '2px solid #e1e8ed',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box'
-                  }}
+                  className="kal-form-input"
                   onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="kal-form-grid-2">
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '6px', 
-                    fontWeight: 'bold',
-                    color: '#2f3636',
-                    fontSize: '14px'
-                  }}>
+                  <label className="kal-form-label">
                     Geburtsjahr
                   </label>
                   <input
@@ -2264,45 +2023,20 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                     placeholder="z.B. 2018"
                     min="1900"
                     max={new Date().getFullYear()}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '2px solid #e1e8ed',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s',
-                      boxSizing: 'border-box'
-                    }}
+                    className="kal-form-input"
                     onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   />
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '6px', 
-                    fontWeight: 'bold',
-                    color: '#2f3636',
-                    fontSize: '14px'
-                  }}>
+                  <label className="kal-form-label">
                     Geschlecht
                   </label>
                   <select
                     value={pferdFormData.geschlecht}
                     onChange={(e) => setPferdFormData({...pferdFormData, geschlecht: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '2px solid #e1e8ed',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s',
-                      boxSizing: 'border-box',
-                      backgroundColor: 'white'
-                    }}
+                    className="kal-form-select"
                     onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                     onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                   >
@@ -2314,13 +2048,7 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
               </div>
 
               <div>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontWeight: 'bold',
-                  color: '#2f3636',
-                  fontSize: '14px'
-                }}>
+                <label className="kal-form-label">
                   Bemerkungen
                 </label>
                 <textarea
@@ -2328,79 +2056,31 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
                   onChange={(e) => setPferdFormData({...pferdFormData, bemerkungen: e.target.value})}
                   placeholder="z.B. Besondere Merkmale, Krankheiten, Verhalten..."
                   rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '2px solid #e1e8ed',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box',
-                    resize: 'vertical',
-                    fontFamily: 'inherit'
-                  }}
+                  className="kal-form-textarea"
                   onFocus={(e) => e.target.style.borderColor = '#5f7f86'}
                   onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
 
-              <div style={{ 
-                display: 'flex', 
-                gap: '12px', 
-                marginTop: '8px',
-                justifyContent: 'flex-end'
-              }}>
+              <div className="kal-form-footer">
                 <button
                   type="button"
                   onClick={() => setShowPferdForm(false)}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#8a8f8b',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#737873'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#8a8f8b'}
+                  className="kal-btn-secondary"
                 >
                   Abbrechen
                 </button>
                 <button
                   type="button"
                   onClick={handleCreatePferd}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#6c8a70',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#5d7863'}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6c8a70'}
+                  className="kal-btn-primary"
                 >
                   🐴 Pferd anlegen
                 </button>
               </div>
             </form>
 
-            <div style={{ 
-              marginTop: '16px', 
-              padding: '12px', 
-              backgroundColor: '#d1ecf1', 
-              border: '1px solid #bee5eb',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#0c5460'
-            }}>
+            <div className="kal-hint-info">
               <strong>ℹ️ Hinweis:</strong> Das neue Pferd wird automatisch für den aktuellen Termin ausgewählt.
             </div>
           </div>
