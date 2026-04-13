@@ -613,17 +613,6 @@ function App() {
               </div>
 
               <div className="panel">
-                <h3>Google Calendar einrichten</h3>
-                <ol className="guide-list">
-                  <li>In der <strong>Google Cloud Console</strong> ein OAuth 2.0-Desktop-Client anlegen.</li>
-                  <li>Die heruntergeladene <code>credentials.json</code> (oder eine Datei mit <code>client_id</code> und <code>client_secret</code>) als <strong>google-oauth-credentials.json</strong> in den App-Daten-Ordner legen:<br /><code>%APPDATA%\hufmacherin-app\</code></li>
-                  <li>Im Kalender auf <strong>„Google Kalender exportieren"</strong> klicken – der Browser öffnet sich automatisch.</li>
-                  <li>Google-Konto auswählen und Zugriff erlauben – die App setzt danach fort.</li>
-                  <li>Hufbearbeitungen landen im Haupt-Kalender, Reitstunden im Kalender „Reitstunden", eigene Termine im Kalender „Persönlich" (werden automatisch angelegt).</li>
-                </ol>
-              </div>
-
-              <div className="panel">
                 <h3>Häufige Fragen</h3>
                 <p><strong>Wie erstelle ich einen Folgetermin?</strong><br />Beim Abschließen eines Termins im Dokumentationsdialog die Wochen auswählen und speichern. Der Vorschlag erscheint dann im Kalender.</p>
                 <p><strong>Wie lege ich schnell einen neuen Kunden an?</strong><br />Im Termin-Dialog beim Feld „Kunde" auf „+ Neu" klicken – Vor- und Nachname eingeben, fertig.</p>
