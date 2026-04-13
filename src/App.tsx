@@ -537,10 +537,11 @@ function App() {
                 <h3>Schnellstart: Termin in 60 Sekunden</h3>
                 <ol className="guide-list">
                   <li>Kalender öffnen und Datum anklicken.</li>
-                  <li>Kunde auswählen und Pferd(e) markieren.</li>
-                  <li>Zeit setzen und Termin als vorreserviert speichern.</li>
-                  <li>Später Status auf bestätigt setzen.</li>
-                  <li>Nach der Bearbeitung abschließen und Folgetermin-Wochen wählen.</li>
+                  <li>Termin-Typ wählen (Hufbearbeitung / Reitstunde / Eigener Termin).</li>
+                  <li>Kunde auswählen und Pferd(e) markieren (bei Hufbearbeitung).</li>
+                  <li>Zeit setzen und Termin als „Vorreserviert" speichern.</li>
+                  <li>Später Status auf „Bestätigt" und nach der Bearbeitung auf „Abgeschlossen" setzen.</li>
+                  <li>Im Abschluss-Dialog Bearbeitungsnotizen eingeben und Folgetermin-Wochen wählen.</li>
                 </ol>
               </div>
 
@@ -550,17 +551,37 @@ function App() {
                   <div className="feature-item done">
                     <span className="feature-state">Live</span>
                     <strong>Status-Workflow</strong>
-                    <p>Vorreserviert → bestätigt → abgeschlossen inklusive Dokumentationsdialog.</p>
-                  </div>
-                  <div className="feature-item done">
-                    <span className="feature-state">Live</span>
-                    <strong>Neuer Kunde im Termin-Dialog</strong>
-                    <p>Kunde direkt im Terminprozess anlegen über + Neu.</p>
+                    <p>Vorreserviert → Bestätigt → Abgeschlossen inkl. Dokumentationsdialog und konfigurierbarem Folgetermin-Vorschlag.</p>
                   </div>
                   <div className="feature-item done">
                     <span className="feature-state">Live</span>
                     <strong>Termin-Typen</strong>
-                    <p>Hufbearbeitung, Reitstunde und eigener Termin mit passender Darstellung.</p>
+                    <p>Hufbearbeitung, Reitstunde und Eigener Termin – jeder Typ mit eigener Farbe, eigenem Workflow und eigenem Google-Kalender.</p>
+                  </div>
+                  <div className="feature-item done">
+                    <span className="feature-state">Live</span>
+                    <strong>Neuer Kunde im Termin-Dialog</strong>
+                    <p>Kunde direkt im Terminprozess über „+ Neu" anlegen, ohne den Dialog zu verlassen.</p>
+                  </div>
+                  <div className="feature-item done">
+                    <span className="feature-state">Live</span>
+                    <strong>Pferde-Historie &amp; Ampelhinweis</strong>
+                    <p>Chronologische Bearbeitungshistorie pro Pferd mit Intervall-Ampel (🟢 ≤6 W. · 🟡 7–8 W. · 🔴 &gt;8 W.).</p>
+                  </div>
+                  <div className="feature-item done">
+                    <span className="feature-state">Live</span>
+                    <strong>Österreichische Feiertage</strong>
+                    <p>Gesetzliche Feiertage werden automatisch im Kalender hervorgehoben.</p>
+                  </div>
+                  <div className="feature-item done">
+                    <span className="feature-state">Live</span>
+                    <strong>Google Calendar Export</strong>
+                    <p>Termine per Knopfdruck in Google Kalender übertragen. Beim ersten Mal öffnet sich der Browser zur Anmeldung – kein Code kopieren nötig. Bereits exportierte Termine werden übersprungen.</p>
+                  </div>
+                  <div className="feature-item done">
+                    <span className="feature-state">Live</span>
+                    <strong>Kalender als PDF exportieren</strong>
+                    <p>Aktuelle Monatsansicht als PDF speichern über den Export-Button in der Kalender-Toolbar.</p>
                   </div>
                 </div>
               </div>
@@ -571,36 +592,43 @@ function App() {
                   <div className="feature-item planned">
                     <span className="feature-state">Geplant</span>
                     <strong>Foto-Dokumentation (PWA + Synology)</strong>
-                    <p>Upload vom Android-Handy auf NAS, spätere Zuordnung und Galerie am PC.</p>
+                    <p>Upload vom Android-Handy auf die Synology DS124, spätere Zuordnung (Huf-Position, Vorher/Nachher) und Galerie am PC.</p>
                   </div>
                   <div className="feature-item planned">
                     <span className="feature-state">Geplant</span>
-                    <strong>Google Calendar Vollintegration</strong>
-                    <p>OAuth2, Typ-basierte Kalender, Vermeidung von Doppel-Exporten.</p>
+                    <strong>Einzeltermin direkt aus Tooltip exportieren</strong>
+                    <p>Aktuell werden alle Termine auf einmal übertragen. Künftig: einzeln direkt im Tooltip exportieren.</p>
                   </div>
                   <div className="feature-item planned">
                     <span className="feature-state">Geplant</span>
                     <strong>Rechnungswesen</strong>
-                    <p>Rechnung pro Termin, PDF-Erstellung und Export für Buchhaltung.</p>
+                    <p>Rechnung pro Termin, PDF-Erstellung und Export für die Buchhaltung.</p>
                   </div>
                   <div className="feature-item planned">
                     <span className="feature-state">Geplant</span>
                     <strong>WhatsApp-Unterstützung</strong>
-                    <p>Später: Termin-/Fotoversand teilautomatisiert aus der App.</p>
-                  </div>
-                  <div className="feature-item planned">
-                    <span className="feature-state">Geplant</span>
-                    <strong>Feiertage und Historie</strong>
-                    <p>AT-Feiertage im Kalender und chronologische Pferde-Historie.</p>
+                    <p>Später: Termin- und Fotoversand teilautomatisiert aus der App.</p>
                   </div>
                 </div>
               </div>
 
               <div className="panel">
+                <h3>Google Calendar einrichten</h3>
+                <ol className="guide-list">
+                  <li>In der <strong>Google Cloud Console</strong> ein OAuth 2.0-Desktop-Client anlegen.</li>
+                  <li>Die heruntergeladene <code>credentials.json</code> (oder eine Datei mit <code>client_id</code> und <code>client_secret</code>) als <strong>google-oauth-credentials.json</strong> in den App-Daten-Ordner legen:<br /><code>%APPDATA%\hufmacherin-app\</code></li>
+                  <li>Im Kalender auf <strong>„Google Kalender exportieren"</strong> klicken – der Browser öffnet sich automatisch.</li>
+                  <li>Google-Konto auswählen und Zugriff erlauben – die App setzt danach fort.</li>
+                  <li>Hufbearbeitungen landen im Haupt-Kalender, Reitstunden im Kalender „Reitstunden", eigene Termine im Kalender „Persönlich" (werden automatisch angelegt).</li>
+                </ol>
+              </div>
+
+              <div className="panel">
                 <h3>Häufige Fragen</h3>
-                <p><strong>Wie erstelle ich einen Folgetermin?</strong><br />Beim Abschließen eines Termins im Dokumentationsdialog die Wochen auswählen und speichern.</p>
-                <p><strong>Wie lege ich schnell einen neuen Kunden an?</strong><br />Im Termin-Dialog beim Feld Kunde auf + Neu klicken.</p>
-                <p><strong>Wo finde ich spätere Funktionen?</strong><br />Links in der Sidebar unter „Erweiterungen" sowie hier in den Platzhaltern.</p>
+                <p><strong>Wie erstelle ich einen Folgetermin?</strong><br />Beim Abschließen eines Termins im Dokumentationsdialog die Wochen auswählen und speichern. Der Vorschlag erscheint dann im Kalender.</p>
+                <p><strong>Wie lege ich schnell einen neuen Kunden an?</strong><br />Im Termin-Dialog beim Feld „Kunde" auf „+ Neu" klicken – Vor- und Nachname eingeben, fertig.</p>
+                <p><strong>Werden bereits exportierte Termine erneut nach Google übertragen?</strong><br />Nein. Jeder Termin wird intern als exportiert markiert und beim nächsten Export übersprungen.</p>
+                <p><strong>Was bedeuten die Termin-Farben?</strong><br />Lila = Vorreserviert · Blau = Bestätigt · Grün = Abgeschlossen · Orange = Reitstunde · Dunkelrot = Eigener Termin.</p>
               </div>
             </div>
           )}
