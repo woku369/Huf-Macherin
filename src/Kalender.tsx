@@ -27,6 +27,62 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+// Berechnung österreichischer Feiertage (feste + bewegliche)
+function getAustrianHolidays(year: number): Map<string, string> {
+  const holidays = new Map<string, string>();
+  const toKey = (d: Date) => d.toISOString().slice(0, 10);
+
+  // Feste Feiertage
+  const fixed: [number, number, string][] = [
+    [1,  1,  'Neujahr'],
+    [6,  1,  'Heilige Drei Könige'],
+    [1,  5,  'Staatsfeiertag'],
+    [15, 8,  'Mariä Himmelfahrt'],
+    [26, 10, 'Nationalfeiertag'],
+    [1,  11, 'Allerheiligen'],
+    [8,  12, 'Mariä Empfängnis'],
+    [25, 12, 'Weihnachten'],
+    [26, 12, 'Stephanitag'],
+  ];
+  for (const [day, month, name] of fixed) {
+    holidays.set(toKey(new Date(year, month - 1, day)), name);
+  }
+
+  // Osterberechnung (Gauss-Algorithmus)
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const easterMonth = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+  const easterDay  = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = new Date(year, easterMonth, easterDay);
+
+  const easterBased: [number, string][] = [
+    [-2,  'Karfreitag'],
+    [0,   'Ostersonntag'],
+    [1,   'Ostermontag'],
+    [39,  'Christi Himmelfahrt'],
+    [49,  'Pfingstsonntag'],
+    [50,  'Pfingstmontag'],
+    [60,  'Fronleichnam'],
+  ];
+  for (const [offset, name] of easterBased) {
+    const d = new Date(easter);
+    d.setDate(d.getDate() + offset);
+    holidays.set(toKey(d), name);
+  }
+
+  return holidays;
+}
+
 interface KalenderProps {
   termine: any[];
   onSelectDate?: (date: Date) => void;
@@ -98,6 +154,16 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
     bisUhrzeit: '10:00',
     typ: 'hufbearbeitung' as 'hufbearbeitung' | 'reitstunde' | 'eigener_termin'
   });
+
+  // Österreichische Feiertage für aktuelles + nächstes Jahr
+  const holidays = useMemo(() => {
+    const year = new Date().getFullYear();
+    const map = new Map([...getAustrianHolidays(year), ...getAustrianHolidays(year + 1)]);
+    return map;
+  }, []);
+
+  const getHoliday = (date: Date): string | undefined =>
+    holidays.get(date.toISOString().slice(0, 10));
 
   const events: TerminEvent[] = useMemo(() =>
     termine.map((t: any) => {
@@ -903,6 +969,42 @@ export default function Kalender({ termine, onSelectDate, onTermineChange }: Kal
           components={{
             event: CustomEvent,
             toolbar: CustomToolbar,
+            month: {
+              dateHeader: ({ date, label }: { date: Date; label: string }) => {
+                const holiday = getHoliday(date);
+                return (
+                  <div style={{ position: 'relative' }}>
+                    <span>{label}</span>
+                    {holiday && (
+                      <span
+                        title={holiday}
+                        style={{
+                          display: 'block',
+                          fontSize: '9px',
+                          color: '#7a5230',
+                          fontWeight: 600,
+                          lineHeight: 1.1,
+                          maxWidth: '52px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          cursor: 'default'
+                        }}
+                      >
+                        {holiday}
+                      </span>
+                    )}
+                  </div>
+                );
+              }
+            }
+          }}
+          dayPropGetter={(date) => {
+            const holiday = getHoliday(date);
+            if (holiday) {
+              return { style: { backgroundColor: '#fdf4e7' } };
+            }
+            return {};
           }}
           messages={{
             month: 'Monat',

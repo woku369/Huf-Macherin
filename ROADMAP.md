@@ -227,9 +227,9 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 - [x] **Bearbeitungsnotizen** beim Termin im Tooltip anzeigen
 - [x] **Ampelhinweis** je Pferd in der Historie (🟢 ≤6 W. / 🟡 7–8 W. / 🔴 >8 W.)
 - [x] **Termin löschen** direkt im Tooltip (2-Schritt-Bestätigung)
-- [ ] **Termin bearbeiten** (Edit-Modal)
-- [ ] **Österreichische Feiertage** im Kalender markieren
-- [ ] Kundenverwaltung: Pferde-Übersicht mit letzter Bearbeitungszeit
+- [x] **Termin bearbeiten** (Edit-Modal)
+- [x] **Österreichische Feiertage** im Kalender markieren
+- [x] Kundenverwaltung: Pferde-Übersicht mit letzter Bearbeitungszeit
 
 ---
 

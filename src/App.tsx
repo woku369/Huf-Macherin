@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, CalendarDays, Camera, ReceiptText, Settings, Users } from 'lucide-react';
 import './App.css';
 import PferdeListe from './PferdeListe';
@@ -88,6 +88,40 @@ function App() {
     root.style.setProperty('--ok', theme.ok);
     root.style.setProperty('--danger', theme.danger);
   }, [theme]);
+
+  // Pferde-Übersicht mit Ampel je Kunde (aus alleTermine, kein extra IPC nötig)
+  const kundenPferdeAmpel = useMemo(() => {
+    const now = Date.now();
+    // Map: kundeId → { pferdId → letztes abgeschlossenes Datum }
+    const map = new Map<number, Map<number, number>>();
+    for (const t of alleTermine) {
+      if ((t.typ || 'hufbearbeitung') !== 'hufbearbeitung') continue;
+      if (t.status !== 'abgeschlossen') continue;
+      const kundeId = t.besitzerId;
+      const pferdId = t.pferdId;
+      if (!kundeId || !pferdId) continue;
+      const datum = new Date(t.datum).getTime();
+      if (!map.has(kundeId)) map.set(kundeId, new Map());
+      const existing = map.get(kundeId)!.get(pferdId) ?? 0;
+      if (datum > existing) map.get(kundeId)!.set(pferdId, datum);
+    }
+
+    const result = new Map<number, { dot: string; color: string; text: string; pferdCount: number }>();
+    for (const [kundeId, pferdeMap] of map) {
+      const pferdCount = pferdeMap.size;
+      let worstWochen = -1;
+      for (const lastTs of pferdeMap.values()) {
+        const wochen = Math.floor((now - lastTs) / (7 * 24 * 60 * 60 * 1000));
+        if (wochen > worstWochen) worstWochen = wochen;
+      }
+      let dot = '🟢'; let color = '#6c8a70'; let text = `≤ 6 W.`;
+      if (worstWochen > 8) { dot = '🔴'; color = '#a55d4e'; text = `${worstWochen} W. – fällig!`; }
+      else if (worstWochen > 6) { dot = '🟡'; color = '#b39563'; text = `${worstWochen} W.`; }
+      else if (worstWochen >= 0) { text = `${worstWochen} W.`; }
+      result.set(kundeId, { dot, color, text, pferdCount });
+    }
+    return result;
+  }, [alleTermine]);
 
   const addKunde = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -310,7 +344,14 @@ function App() {
                   setActiveView('kunden');
                 }}
               >
-                <div className="quick-name">{k.name} {k.vorname && k.vorname}</div>
+                <div className="quick-name">
+                  {kundenPferdeAmpel.has(k.id) && (
+                    <span style={{ marginRight: '4px' }} title={kundenPferdeAmpel.get(k.id)!.text}>
+                      {kundenPferdeAmpel.get(k.id)!.dot}
+                    </span>
+                  )}
+                  {k.name} {k.vorname && k.vorname}
+                </div>
                 <div className="quick-address">{k.adresse || 'Keine Adresse'}</div>
               </button>
             ))}
@@ -457,6 +498,15 @@ function App() {
                           >
                             <div className="kunden-name">{k.name} {k.vorname && k.vorname}</div>
                             <div className="kunden-address">{k.adresse || 'Keine Adresse hinterlegt'}</div>
+                            {kundenPferdeAmpel.has(k.id) && (() => {
+                              const a = kundenPferdeAmpel.get(k.id)!;
+                              return (
+                                <div style={{ marginTop: '4px', fontSize: '12px', color: a.color, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <span>{a.dot}</span>
+                                  <span>{a.pferdCount} Pferd{a.pferdCount !== 1 ? 'e' : ''} · letzter Termin {a.text}</span>
+                                </div>
+                              );
+                            })()}
                           </button>
                           <div className="card-actions">
                             <button className="btn btn-info" onClick={() => startEditKunde(k)}>Bearbeiten</button>
