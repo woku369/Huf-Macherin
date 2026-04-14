@@ -1,6 +1,6 @@
 # Roadmap – Die Huf-Macherin App
 
-> **Zuletzt aktualisiert:** 14. April 2026 (Session 8 – Block D fast fertig: NAS live, Health-Check OK)  
+> **Zuletzt aktualisiert:** 14. April 2026 (Session 8 – Block D fertig: NAS live, Autostart, PWA auf Smartphone)  
 > **App-Version:** 0.0.0 (Entwicklungsphase)  
 > **Stack:** Electron + React + Vite + TypeScript + SQLite (better-sqlite3)
 
@@ -12,7 +12,7 @@
 Kernfunktionen    ██████████████░░░░░░  72%
 Kalender          █████████████████░░░  84%
 Google Calendar   ████████████████░░░░  80%
-PWA / Synology    ████████████████░░░░  80%
+PWA / Synology    ███████████████████░  95%
 ```
 
 ## Fachliche Grundlagen (Workflow-Kontext)
@@ -349,9 +349,9 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 - [x] `npm install` auf NAS erfolgreich (PATH-Trick: `node /usr/local/lib/node_modules/npm/bin/npm-cli.js`)
 - [x] Health-Check: `{"success":true,"app":"HufMacherin","port":3004}` ✅
 - [x] `nas/deploy.ps1` fertig (passwortlos, korrekter node/npm-Pfad, Schritt-für-Schritt)
-- [ ] **Task Scheduler (Synology DSM)** → Autostart bei Boot einrichten (Script unten)
-- [ ] PWA auf Smartphone installieren (Chrome → „Zum Startbildschirm")
-- [ ] NAS-URL im Einstellungs-Modal auf Handy eintragen: `http://100.121.103.107:3004`
+- [x] **Task Scheduler (Synology DSM)** → Autostart bei Boot eingerichtet ✅
+- [x] PWA auf Smartphone installieren (Chrome → „Zum Startbildschirm")
+- [x] NAS-URL im Einstellungs-Modal auf Handy eintragen: `http://100.121.103.107:3004`
 
 ---
 
