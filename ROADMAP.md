@@ -1,6 +1,6 @@
 # Roadmap – Die Huf-Macherin App
 
-> **Zuletzt aktualisiert:** 14. April 2026 (Session 8 – Block B + C fertig: Server-CRUD + index.html vollständig)  
+> **Zuletzt aktualisiert:** 14. April 2026 (Session 8 – Block D fast fertig: NAS live, Health-Check OK)  
 > **App-Version:** 0.0.0 (Entwicklungsphase)  
 > **Stack:** Electron + React + Vite + TypeScript + SQLite (better-sqlite3)
 
@@ -12,7 +12,7 @@
 Kernfunktionen    ██████████████░░░░░░  72%
 Kalender          █████████████████░░░  84%
 Google Calendar   ████████████████░░░░  80%
-PWA / Synology    █████████████░░░░░░░  65%
+PWA / Synology    ████████████████░░░░  80%
 ```
 
 ## Fachliche Grundlagen (Workflow-Kontext)
@@ -342,15 +342,16 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 
 #### D · Deployment auf Synology DS124
 
-- [ ] Tailscale-Node ins Huf-Macherin-Netzwerk aufnehmen (⏳ Tailscale-IP noch offen)
-- [ ] SSH-Zugang zur DS124 einrichten
-- [ ] Verzeichnis anlegen: `ssh admin@[NAS-IP] mkdir -p "/volume1/Tenny/HufMacherin App/nas/public/icons"`
-- [ ] Dateien übertragen (SSH-Pipe-Methode aus DOCS.md Kapitel 8)
-- [ ] `npm install` auf NAS ausführen (sharp wird für NAS-ARM kompiliert)
-- [ ] Health-Check: `http://[Tailscale-IP]:3004/api/health`
-- [ ] Task Scheduler (Synology DSM) → Autostart bei Boot einrichten
+- [x] Tailscale-Node ins Huf-Macherin-Netzwerk aufnehmen (100.121.103.107)
+- [x] SSH-Zugang zur DS124 einrichten (admin, Port 22, passwortlos via SSH-Key `~/.ssh/hufmacherin_nas`)
+- [x] Verzeichnisse anlegen: `nas/public/icons`, `nas/database`, `nas/backups`, `nas/_untagged`
+- [x] Dateien übertragen (SSH-Pipe): server.js, package.json, index.html, upload.html, manifest.json, sw.js
+- [x] `npm install` auf NAS erfolgreich (PATH-Trick: `node /usr/local/lib/node_modules/npm/bin/npm-cli.js`)
+- [x] Health-Check: `{"success":true,"app":"HufMacherin","port":3004}` ✅
+- [x] `nas/deploy.ps1` fertig (passwortlos, korrekter node/npm-Pfad, Schritt-für-Schritt)
+- [ ] **Task Scheduler (Synology DSM)** → Autostart bei Boot einrichten (Script unten)
 - [ ] PWA auf Smartphone installieren (Chrome → „Zum Startbildschirm")
-- [ ] NAS-URL im Einstellungs-Modal auf Handy eintragen
+- [ ] NAS-URL im Einstellungs-Modal auf Handy eintragen: `http://100.121.103.107:3004`
 
 ---
 
