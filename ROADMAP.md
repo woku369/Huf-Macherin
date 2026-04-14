@@ -1,6 +1,6 @@
 # Roadmap – Die Huf-Macherin App
 
-> **Zuletzt aktualisiert:** 13. April 2026 (Session 6 – Phase 4 Google Calendar OAuth abgeschlossen)  
+> **Zuletzt aktualisiert:** 14. April 2026 (Session 8 – Block B + C fertig: Server-CRUD + index.html vollständig)  
 > **App-Version:** 0.0.0 (Entwicklungsphase)  
 > **Stack:** Electron + React + Vite + TypeScript + SQLite (better-sqlite3)
 
@@ -12,7 +12,7 @@
 Kernfunktionen    ██████████████░░░░░░  72%
 Kalender          █████████████████░░░  84%
 Google Calendar   ████████████████░░░░  80%
-PWA / Synology    ░░░░░░░░░░░░░░░░░░░░   0%
+PWA / Synology    █████████████░░░░░░░  65%
 ```
 
 ## Fachliche Grundlagen (Workflow-Kontext)
@@ -254,43 +254,120 @@ ALTER TABLE termine ADD COLUMN titelManuell TEXT;
 - [ ] Einzeltermin aus Tooltip direkt exportieren (aktuell: Bulk-Export aller Termine)
 - [ ] Fehlerbehandlung bei fehlgeschlagenem Export verbessern (Retry, UI-Feedback pro Termin)
 
-### Phase 4: PWA für Foto-Upload (Synology via Tailscale)
+### Phase 4: PWA – Vollausbau (Smartphone als primäres Arbeitsgerät vor Ort)
 
-> Android-Smartphone → PWA (Browser) → Synology DS124 via Tailscale  
-> Strukturierte Ablage plus Ansicht + Tagging in der Electron-App  
-> Eigener Skill wird vom Benutzer definiert.
+> **Philosophie:** Die Userin ist vor Ort **ausschließlich mit dem Smartphone**. Die PWA ist ihr primäres Werkzeug – Termine, Kunden, Pferde, Fotos. Der PC übernimmt nur Bildnachbearbeitung und später Buchhaltung.  
+> **Datenstrategie:** NAS-unabhängig (JSON auf der NAS), PC-App hat eigene SQLite. Sync kommt später.  
+> **Stack:** Pure-HTML-PWA + Node.js HTTP-Server (Port 3004) + JSON-Dateien als Datenspeicher  
+> **NAS-Verzeichnis:** `/volume1/Tenny/HufMacherin App/`
 
-**Voraussetzungen (einmalig):**
-- [x] Tailscale-Client auf DS124 installiert und aktiv
-- [ ] Tailscale-Node ins Huf-Macherin-Netzwerk aufnehmen (⏳ Infos folgen)
-- [ ] Synology: **File Station API** aktivieren (kein WebDAV – Provider-seitig gesperrt)
-- [ ] Ordnerstruktur auf NAS festlegen: `/HufMacherin/[YYYY-MM-DD]_[PferdName]_[KundeName]/`
+---
 
-**Upload-Protokoll: Synology File Station HTTP API (DSM 7)**
-- REST-Endpunkt: `https://[tailscale-ip]:5001/webapi/entry.cgi`
-- Methode: `SYNO.FileStation.Upload` (kein WebDAV nötig)
-- Auth: Synology-Account Session-Token oder API-Key
+#### A · Infrastruktur & Architektur
 
-**Vor-Ort-Workflow (PWA, Handy):**
-- Schnell & simpel – kein Taggen, keine Zuordnung vor Ort
-- [ ] **Skill fertigstellen:** `.github/skills/synology-tailscale-upload/SKILL.md` mit Tailscale-Zugangsdaten befüllen (⏳ wenn im Heimnetz)
-- [ ] PWA-Grundgerüst (Vite + React + TypeScript, Manifest, als Homescreen-App installierbar)
-- [ ] Kamera-Direktaufnahme (`<input capture="environment">`)
-- [ ] Kunde + Pferd auswählen (Dropdown, wenige Klicks)
-- [ ] Sofort-Upload auf DS124 in Staging-Ordner: `/HufMacherin/_untagged/[Datum]_[Pferd]/`
-- [ ] Offline-Upload-Queue (IndexedDB + Background Sync API)
-- [ ] **Kein Taggen vor Ort** – Huf-Position & Vorher/Nachher alles später am PC
+- [x] `nas/server.js` – Grundgerüst (Port 3004, `safePath`, `safeWriteJson`, `/api/health`, `/api/upload`, statische Dateien)
+- [x] `nas/package.json` – nur `sharp` als Dependency
+- [x] `nas/public/upload.html` – Foto-Upload-PWA (Hufbearbeitung + Nacherfassung, Offline-Queue)
+- [x] `nas/public/manifest.json` – PWA-Manifest
+- [x] `nas/public/sw.js` – Service Worker (Cache-first + Background Sync)
+- [x] `nas/.gitignore` – `node_modules/` + `test-data/` ausgeschlossen
+- [x] `nas/test-lokal.ps1` – lokaler Test-Start auf Windows (zeigt Tailscale-URL)
+- [ ] **PWA-Icons erstellen** – `nas/public/icons/icon-192.png` + `icon-512.png` (Huf-Symbol, erdbraun)
+
+---
+
+#### B · Server: CRUD-Routen für Kerndaten
+
+> Alle Daten als JSON in `database/` auf der NAS. `safeWriteJson` schützt vor Datenverlust.  
+> Datenmodell: Kunden → Pferde (1:n) → Termine (1:n pro Pferd).
+
+- [x] **`GET /api/kunden`** – alle Kunden laden (`database/kunden.json`)
+- [x] **`POST /api/kunden`** – neuen Kunden anlegen (id = `ku_[timestamp]`)
+- [x] **`PUT /api/kunden/:id`** – Kunden bearbeiten
+- [x] **`DELETE /api/kunden/:id`** – Kunden löschen (nur wenn keine Pferde vorhanden)
+- [x] **`GET /api/pferde`** – alle Pferde laden (`database/pferde.json`)
+- [x] **`POST /api/pferde`** – neues Pferd anlegen (id = `pf_[timestamp]`, Referenz `kundeId`)
+- [x] **`PUT /api/pferde/:id`** – Pferd bearbeiten
+- [x] **`DELETE /api/pferde/:id`** – Pferd löschen (nur wenn keine Termine vorhanden)
+- [x] **`GET /api/termine`** – alle Termine laden (`database/termine.json`, optional `?pferdId=&von=&bis=`)
+- [x] **`POST /api/termine`** – neuen Termin anlegen (id = `te_[timestamp]`)
+- [x] **`PUT /api/termine/:id`** – Termin bearbeiten / Status ändern
+- [x] **`DELETE /api/termine/:id`** – Termin löschen
+
+---
+
+#### C · PWA: `index.html` (neue Haupt-App, ersetzt `upload.html` als Einstieg)
+
+> Tab-Navigation unten (mobil-üblich): **Termine · Kunden · Pferde · Fotos**  
+> `upload.html` bleibt erhalten, leitet aber auf `index.html#fotos` weiter.
+
+**Grundstruktur & Navigation:**
+- [x] `nas/public/index.html` anlegen – Shell mit Tab-Bar unten (4 Tabs)
+- [x] `nas/public/manifest.json` → `start_url: /`, Name `HufMacherin`
+- [x] `nas/public/upload.html` → Redirect auf `index.html#fotos`
+- [x] `nas/public/sw.js` → `index.html` in Cache-Liste aufnehmen
+- [x] Einstellungen-Modal (NAS-URL, Auto-Open bei erstem Start) in `index.html`
+- [x] Verbindungsstatus-Banner
+
+**Tab 1 – Termine:**
+- [x] Listenansicht: nach Datum gruppiert, Datum-Trenner, Heute markiert
+- [x] Termin-Karte: Uhrzeit, Pferd, Kunde, Status-Badge (farbig)
+- [x] Status-Schnellwechsel direkt auf Termin-Karte
+- [x] „+ Neuer Termin“-Button (FAB) → Formular-Modal
+- [x] Formular: Datum, Von–Bis (15-Min-Schritte), Pferd-Dropdown aus DB, Bemerkung
+- [x] Folgetermin-Vorschlag: nach Abschluss → 4/5/6/8 Wochen wählbar, Werktag-Korrektur
+- [x] Termin bearbeiten (Edit-Icon)
+- [x] Termin löschen (2-Schritt)
+
+**Tab 2 – Kunden:**
+- [x] Kundenliste (alphabetisch, Suchfeld)
+- [x] Kunden-Detail: Name, Adresse, Pferde-Anzahl sichtbar
+- [x] „+ Neuer Kunde“-Formular: Vorname, Name, Adresse, Telefon (optional)
+- [x] Kunden bearbeiten
+- [x] Kunden löschen (nur wenn keine Pferde)
+
+**Tab 3 – Pferde:**
+- [x] Pferdeliste (gruppiert nach Kunde, Suchfeld)
+- [x] Pferd-Detail: Name, Geburtsjahr, Geschlecht, letzter abgeschlossener Termin
+- [x] „+ Neues Pferd“-Formular: Name, Geburtsjahr, Geschlecht, Besitzer (Kunde wählen), Bemerkungen
+- [x] Pferd bearbeiten
+- [x] Pferd löschen (nur wenn keine Termine)
+
+**Tab 4 – Fotos:**
+- [x] Foto-Upload-Flow aus `upload.html` übernommen (Session-Start, Huf-Grid, Kamera, Nacherfassung)
+- [x] Pferd-Dropdown aus DB (mit Fallback auf Freitext)
+- [x] Session-Galerie
+
+---
+
+#### D · Deployment auf Synology DS124
+
+- [ ] Tailscale-Node ins Huf-Macherin-Netzwerk aufnehmen (⏳ Tailscale-IP noch offen)
+- [ ] SSH-Zugang zur DS124 einrichten
+- [ ] Verzeichnis anlegen: `ssh admin@[NAS-IP] mkdir -p "/volume1/Tenny/HufMacherin App/nas/public/icons"`
+- [ ] Dateien übertragen (SSH-Pipe-Methode aus DOCS.md Kapitel 8)
+- [ ] `npm install` auf NAS ausführen (sharp wird für NAS-ARM kompiliert)
+- [ ] Health-Check: `http://[Tailscale-IP]:3004/api/health`
+- [ ] Task Scheduler (Synology DSM) → Autostart bei Boot einrichten
+- [ ] PWA auf Smartphone installieren (Chrome → „Zum Startbildschirm")
+- [ ] NAS-URL im Einstellungs-Modal auf Handy eintragen
+
+---
+
+#### E · Feldtest & Feinschliff
+
+- [x] Lokaler Test mit eigenem Smartphone: PWA geladen, 4 Tabs sichtbar, NAS-URL eingetragen ✅
+- [ ] Termin-Workflow end-to-end testen (anlegen → Foto → abschließen → Folgetermin)
+- [ ] Offline-Verhalten prüfen (Flugmodus → Fotos upload später, DB-Änderungen?)
+- [ ] Einrichtung auf Userin-PC + Userin-Smartphone (vor Ort)
+
+---
 
 **Am PC (Electron-App, nachher):**
-- Fotos aus NAS-Staging in strukturierte Ordner verschieben
-- Huf-Position zuweisen: VL / VR / HL / HR (per Klick/Drag)
-- Vorher / Nachher markieren
-- Bemerkungen hinzufügen
-- Vorher/Nachher-Vergleich: zwei Bilder nebeneinander, gleiche Position
-- Chronologische Galerie pro Pferd
-
-**Videos:**
-- Zunächst kein Video (Foto reicht) – kann später ergänzt werden
+- Fotos aus NAS `_untagged/` in strukturierte Ordner verschieben
+- Kunden/Pferde/Termine zwischen PWA-JSON und PC-SQLite abgleichen (Sync – Phase 5)
+- Bildnachbearbeitung, Vorher/Nachher-Vergleich
+- Galerie pro Pferd
 
 ---
 

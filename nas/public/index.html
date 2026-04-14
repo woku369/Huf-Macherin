@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="HufMacherin">
+  <meta name="theme-color" content="#6b4c2a">
+  <link rel="manifest" href="/manifest.json">
+  <title>HufMacherin</title>
+  <style>
+    /* ── Reset & Variablen ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --braun:       #6b4c2a;
+      --braun-hell:  #a0785a;
+      --braun-tief:  #4a3218;
+      --beige:       #f5f0e8;
+      --beige-dunkel:#e8dfc8;
+      --gruen:       #4a6741;
+      --gruen-hell:  #6b9b60;
+      --blau:        #2c5f8a;
+      --violett:     #6b4a8a;
+      --orange:      #c8762a;
+      --rot:         #b94444;
+      --text:        #2d2217;
+      --text-hell:   #6b5840;
+      --rand:        #d4c4a8;
+      --tab-h:       60px;
+      --header-h:    52px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--beige);
+      color: var(--text);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--braun);
+      color: #fff;
+      height: var(--header-h);
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+      position: relative;
+      z-index: 50;
+    }
+    .header-title { font-size: 17px; font-weight: 700; letter-spacing: .2px; }
+    .header-sub   { font-size: 11px; opacity: .75; margin-top: 1px; }
+    #btn-settings {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      color: #fff;
+      border-radius: 7px;
+      padding: 5px 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* ── Status-Banner ── */
+    #status-banner {
+      font-size: 12px;
+      text-align: center;
+      padding: 5px 12px;
+      flex-shrink: 0;
+      display: none;
+    }
+    #status-banner.online  { background: #d4edda; color: #155724; display: block; }
+    #status-banner.offline { background: #f8d7da; color: #721c24; display: block; }
+    #status-banner.pruefen { background: #fff3cd; color: #856404; display: block; }
+
+    /* ── Tab-Inhalt ── */
+    #tab-inhalt {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 14px 14px 8px;
+    }
+
+    .tab-view { display: none; }
+    .tab-view.aktiv { display: block; }
+
+    /* ── Tab-Bar ── */
+    nav {
+      height: var(--tab-h);
+      background: #fff;
+      border-top: 1px solid var(--rand);
+      display: flex;
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border: none;
+      background: transparent;
+      color: var(--text-hell);
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 4px;
+      transition: color .15s;
+    }
+    .tab-btn .icon { font-size: 22px; line-height: 1; }
+    .tab-btn.aktiv { color: var(--braun); font-weight: 700; }
+
+    /* ── Karten ── */
+    .card {
+      background: #fff;
+      border: 1px solid var(--rand);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .card-titel {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--braun);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* ── Formulare ── */
+    label {
+      font-size: 12px;
+      color: var(--text-hell);
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+    label:first-child { margin-top: 0; }
+    input[type="text"], input[type="date"], input[type="number"],
+    input[type="tel"], select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--rand);
+      border-radius: 8px;
+      font-size: 16px;
+      color: var(--text);
+      background: var(--beige);
+      font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 64px; }
+    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b5840' fill='none' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--braun-hell); background: #fff; }
+    input[readonly] { color: var(--text-hell); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%; padding: 13px; background: var(--gruen); color: #fff;
+      border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+      cursor: pointer; margin-top: 12px;
+    }
+    .btn-primary:disabled { background: #b0b0b0; cursor: not-allowed; }
+    .btn-primary:active:not(:disabled) { background: var(--gruen-hell); }
+    .btn-secondary {
+      width: 100%; padding: 11px; background: transparent; color: var(--braun);
+      border: 1px solid var(--braun); border-radius: 10px; font-size: 14px;
+      cursor: pointer; margin-top: 8px;
+    }
+    .btn-danger {
+      width: 100%; padding: 11px; background: transparent; color: var(--rot);
+      border: 1px solid var(--rot); border-radius: 10px; font-size: 14px;
+      cursor: pointer; margin-top: 8px;
+    }
+    .btn-icon {
+      background: none; border: none; cursor: pointer; font-size: 18px;
+      padding: 4px 6px; border-radius: 6px; color: var(--text-hell);
+    }
+    .btn-fab {
+      position: fixed; bottom: calc(var(--tab-h) + 14px); right: 16px;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--braun); color: #fff; border: none;
+      font-size: 26px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+      z-index: 40;
+    }
+
+    /* ── Listen-Zeilen ── */
+    .list-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--beige-dunkel);
+      cursor: pointer;
+    }
+    .list-item:last-child { border-bottom: none; }
+    .list-item .li-haupt { flex: 1; font-size: 15px; font-weight: 600; }
+    .list-item .li-sub   { font-size: 12px; color: var(--text-hell); margin-top: 1px; }
+    .list-item .li-icon  { font-size: 20px; flex-shrink: 0; }
+    .list-item .li-pfeil { font-size: 13px; color: var(--rand); flex-shrink: 0; }
+
+    .leer-hinweis {
+      text-align: center; color: var(--text-hell); padding: 28px 16px;
+      font-size: 14px; line-height: 1.6;
+    }
+
+    /* ── Suchfeld ── */
+    .suchfeld-wrap { position: relative; margin-bottom: 10px; }
+    .suchfeld-wrap input {
+      padding-left: 34px; font-size: 15px;
+      border-radius: 10px; width: 100%;
+    }
+    .suchfeld-wrap .such-icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      font-size: 15px; pointer-events: none;
+    }
+
+    /* ── Status-Badge ── */
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+    .badge-vorreserviert { background: #e8e0f0; color: var(--violett); }
+    .badge-bestaetigt    { background: #d0e4f5; color: var(--blau); }
+    .badge-abgeschlossen { background: #d4edda; color: var(--gruen); }
+    .badge-abgesagt      { background: #f8d7da; color: var(--rot); }
+
+    /* ── Termin-Karte ── */
+    .termin-karte {
+      background: #fff; border: 1px solid var(--rand); border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 8px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .termin-karte .tk-links { flex: 1; }
+    .termin-karte .tk-kopf  { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+    .termin-karte .tk-pferd { font-size: 15px; font-weight: 700; color: var(--text); }
+    .termin-karte .tk-kunde { font-size: 12px; color: var(--text-hell); }
+    .termin-karte .tk-datum { font-size: 12px; color: var(--text-hell); margin-bottom: 4px; }
+    .termin-karte .tk-bem   { font-size: 12px; color: var(--text-hell); font-style: italic; margin-top: 4px; }
+    .termin-karte .tk-aktionen { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+
+    /* ── Datum-Trenner ── */
+    .datum-trenner {
+      font-size: 12px; font-weight: 700; color: var(--braun);
+      text-transform: uppercase; letter-spacing: .5px;
+      padding: 10px 0 4px; margin-top: 4px;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 18px; height: 18px; border: 2px solid currentColor;
+      border-top-color: transparent; border-radius: 50%;
+      animation: spin .6s linear infinite; flex-shrink: 0; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Modal (Bottom-Sheet) ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5);
+      z-index: 100; display: flex; align-items: flex-end; justify-content: center;
+    }
+    .modal-overlay.versteckt { display: none; }
+    .modal-box {
+      background: #fff; border-radius: 20px 20px 0 0;
+      padding: 0 0 env(safe-area-inset-bottom, 16px);
+      width: 100%; max-width: 520px;
+      max-height: 92dvh; display: flex; flex-direction: column;
+    }
+    .modal-griff {
+      width: 38px; height: 4px; border-radius: 2px; background: var(--rand);
+      margin: 10px auto 0;
+    }
+    .modal-kopf {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px 0;
+    }
+    .modal-kopf h2 { font-size: 17px; font-weight: 700; color: var(--braun); }
+    .modal-body { flex: 1; overflow-y: auto; padding: 8px 16px 16px; }
+
+    /* ── Huf-Grid (Fotos) ── */
+    .huf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .huf-btn {
+      padding: 14px; border: 2px solid var(--rand); border-radius: 10px;
+      background: var(--beige); cursor: pointer; font-size: 14px; font-weight: 700;
+      color: var(--text-hell); text-align: center; transition: all .15s;
+    }
+    .huf-btn .huf-label { font-size: 10px; font-weight: 400; margin-top: 3px; opacity: .8; }
+    .huf-btn.aktiv { border-color: var(--braun); background: var(--braun); color: #fff; }
+    .seite-toggle { display: flex; border: 1px solid var(--rand); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+    .seite-btn { flex: 1; padding: 10px; border: none; background: var(--beige); font-size: 14px; cursor: pointer; color: var(--text-hell); }
+    .seite-btn.aktiv { background: var(--braun); color: #fff; font-weight: 700; }
+
+    /* ── Galerie-Grid ── */
+    .galerie-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 10px; }
+    .galerie-item { aspect-ratio:1; border-radius: 8px; overflow: hidden; border: 1px solid var(--rand); background: #eee; position: relative; }
+    .galerie-item img { width: 100%; height: 100%; object-fit: cover; }
+    .galerie-item .galerie-label { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,.65); color: #fff; font-size: 9px; padding: 2px 4px; text-align: center; }
+
+    /* ── Upload-Status ── */
+    .upload-status { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
+    .upload-status.warten  { background: #fff3cd; color: #856404; }
+    .upload-status.laden   { background: #d1ecf1; color: #0c5460; }
+    .upload-status.erfolg  { background: #d4edda; color: #155724; }
+    .upload-status.fehler  { background: #f8d7da; color: #721c24; }
+
+    /* ── Nacherfassung Queue ── */
+    .modus-toggle  { display:flex; border:1px solid var(--rand); border-radius:8px; overflow:hidden; margin-bottom:12px; }
+    .modus-btn     { flex:1; padding:9px 6px; border:none; background:var(--beige); font-size:12px; font-weight:700; cursor:pointer; color:var(--text-hell); text-align:center; }
+    .modus-btn.aktiv { background:var(--braun); color:#fff; }
+    .queue-liste { display:flex; flex-direction:column; gap:6px; max-height:200px; overflow-y:auto; margin-top:8px; }
+    .queue-item  { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--beige); border:1px solid var(--rand); border-radius:8px; font-size:12px; }
+    .queue-item .qi-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .queue-item .qi-status { font-size:14px; flex-shrink:0; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div>
+    <div class="header-title">&#x1F40E; HufMacherin</div>
+    <div class="header-sub" id="header-sub">Bereit</div>
+  </div>
+  <button id="btn-settings" onclick="zeigeModal('modal-settings')">&#x2699;&#xFE0F;</button>
+</header>
+
+<!-- ── Status-Banner ── -->
+<div id="status-banner" class="pruefen">Verbindung wird geprueft&#x2026;</div>
+
+<!-- ── Tab-Inhalt ── -->
+<div id="tab-inhalt">
+
+  <!-- ══ TAB: TERMINE ══ -->
+  <div class="tab-view aktiv" id="tab-termine">
+    <div id="termine-liste"></div>
+  </div>
+
+  <!-- ══ TAB: KUNDEN ══ -->
+  <div class="tab-view" id="tab-kunden">
+    <div class="suchfeld-wrap">
+      <span class="such-icon">&#x1F50D;</span>
+      <input type="text" id="kunden-suche" placeholder="Suchen&#x2026;" oninput="renderKunden()">
+    </div>
+    <div class="card" id="kunden-liste"></div>
+  </div>
+
+  <!-- ══ TAB: PFERDE ══ -->
+  <div class="tab-view" id="tab-pferde">
+    <div class="suchfeld-wrap">
+      <span class="such-icon">&#x1F50D;</span>
+      <input type="text" id="pferde-suche" placeholder="Suchen&#x2026;" oninput="renderPferde()">
+    </div>
+    <div id="pferde-liste"></div>
+  </div>
+
+  <!-- ══ TAB: FOTOS ══ -->
+  <div class="tab-view" id="tab-fotos">
+
+    <!-- Session starten -->
+    <div id="fotos-screen-session">
+      <div class="card">
+        <div class="card-titel">&#x1F40E; Neue Bearbeitung</div>
+        <label>Pferd</label>
+        <select id="foto-pferd-select" onchange="fotoPferdGewaehlt()">
+          <option value="">&#x2014; Pferd auswaehlen &#x2014;</option>
+        </select>
+        <label>Datum</label>
+        <input type="date" id="foto-datum">
+        <button class="btn-primary" onclick="fotoSessionStarten()">Weiter &#x2192;</button>
+      </div>
+      <div class="card" id="foto-sessions-card">
+        <div class="card-titel">&#x1F5C3;&#xFE0F; Letzte Uploads</div>
+        <div id="foto-sessions-liste"><div class="leer-hinweis">Noch keine Uploads</div></div>
+      </div>
+    </div>
+
+    <!-- Foto aufnehmen -->
+    <div id="fotos-screen-aufnahme" style="display:none">
+      <div class="card">
+        <!-- Modus-Toggle -->
+        <div class="modus-toggle">
+          <button class="modus-btn aktiv" id="foto-modus-huf"     onclick="fotoModusWaehlen('huf')">&#x1F4CC; Hufbearbeitung</button>
+          <button class="modus-btn"       id="foto-modus-galerie" onclick="fotoModusWaehlen('galerie')">&#x1F4F7; Nacherfassung</button>
+        </div>
+
+        <!-- Hufbearbeitung -->
+        <div id="foto-huf-bereich">
+          <div class="card-titel" style="margin-bottom:10px">&#x1F4CD; Huf</div>
+          <div class="huf-grid">
+            <button class="huf-btn" id="huf-VL" onclick="fotoHufWaehlen('VL')">VL<div class="huf-label">Vorne Links</div></button>
+            <button class="huf-btn" id="huf-VR" onclick="fotoHufWaehlen('VR')">VR<div class="huf-label">Vorne Rechts</div></button>
+            <button class="huf-btn" id="huf-HL" onclick="fotoHufWaehlen('HL')">HL<div class="huf-label">Hinten Links</div></button>
+            <button class="huf-btn" id="huf-HR" onclick="fotoHufWaehlen('HR')">HR<div class="huf-label">Hinten Rechts</div></button>
+          </div>
+          <div class="seite-toggle">
+            <button class="seite-btn aktiv" id="seite-vorher"  onclick="fotoSeiteWaehlen('vorher')">Vorher</button>
+            <button class="seite-btn"       id="seite-nachher" onclick="fotoSeiteWaehlen('nachher')">Nachher</button>
+          </div>
+          <input type="file" accept="image/*" capture="environment" id="kamera-input"  onchange="fotoEinzelnGewaehlt(event)" style="display:none">
+          <input type="file" accept="image/*"                        id="galerie-input" onchange="fotoEinzelnGewaehlt(event)" style="display:none">
+          <button style="width:100%;padding:14px;background:var(--braun);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px" onclick="document.getElementById('kamera-input').click()">&#x1F4F7; Foto aufnehmen</button>
+          <button style="width:100%;padding:11px;background:var(--beige-dunkel);color:var(--text);border:1px solid var(--rand);border-radius:10px;font-size:14px;cursor:pointer" onclick="document.getElementById('galerie-input').click()">&#x1F5BC;&#xFE0F; Aus Galerie</button>
+        </div>
+
+        <!-- Nacherfassung -->
+        <div id="foto-galerie-bereich" style="display:none">
+          <div class="card-titel" style="margin-bottom:8px">&#x1F4F7; Nacherfassung</div>
+          <label>Quelle (optional)</label>
+          <input type="text" id="foto-quelle" placeholder="z.B. Kundin, Kollege, Archiv 2023" autocomplete="off">
+          <input type="file" accept="image/*" multiple id="mehrfach-input" onchange="fotoMehrfachGewaehlt(event)" style="display:none">
+          <button style="width:100%;padding:11px;background:var(--beige-dunkel);color:var(--text);border:1px solid var(--rand);border-radius:10px;font-size:14px;cursor:pointer;margin-top:8px" onclick="document.getElementById('mehrfach-input').click()">&#x1F5BC;&#xFE0F; Fotos auswaehlen&#x2026;</button>
+          <div class="queue-liste" id="foto-queue-liste"></div>
+          <button class="btn-primary"    id="btn-queue-hochladen" style="display:none" onclick="fotoQueueHochladen()">&#x2B06; Alle hochladen</button>
+          <button class="btn-secondary"  id="btn-queue-loeschen"  style="display:none" onclick="fotoQueueLeeren()">Auswahl leeren</button>
+        </div>
+      </div>
+
+      <!-- Vorschau -->
+      <div id="foto-vorschau-bereich" style="display:none">
+        <div class="card">
+          <div class="card-titel">&#x1F4F8; Vorschau</div>
+          <img id="foto-vorschau-bild" src="" alt="Vorschau" style="width:100%;max-height:260px;object-fit:contain;border-radius:8px;border:1px solid var(--rand);background:#111;margin-bottom:10px">
+          <div style="font-size:12px;color:var(--text-hell);font-family:monospace;word-break:break-all;padding:6px 8px;background:var(--beige-dunkel);border-radius:6px;margin-bottom:10px" id="foto-vorschau-pfad"></div>
+          <div class="upload-status warten" id="foto-upload-status">Bereit zum Hochladen</div>
+          <button class="btn-primary"    id="btn-foto-hochladen" onclick="fotoHochladen()">&#x2705; Hochladen</button>
+          <button class="btn-secondary"  onclick="fotoVorschauAbbrechen()">&#x21A9;&#xFE0F; Anderes Foto</button>
+        </div>
+      </div>
+
+      <button class="btn-secondary" onclick="fotoGalerieZeigen()">Session-Galerie&#x2026;</button>
+      <button class="btn-danger" onclick="fotoSessionBeenden()">Session beenden</button>
+    </div>
+
+    <!-- Session-Galerie -->
+    <div id="fotos-screen-galerie" style="display:none">
+      <div class="card">
+        <div class="card-titel" id="foto-galerie-titel">Galerie</div>
+        <div class="galerie-grid" id="foto-galerie-grid"></div>
+        <button class="btn-primary"   onclick="fotoGalerieWeiter()">&#x2B50; Weiteres Foto</button>
+        <button class="btn-secondary" onclick="fotoSessionBeenden()">Session beenden</button>
+      </div>
+    </div>
+
+  </div><!-- /tab-fotos -->
+
+</div><!-- /tab-inhalt -->
+
+<!-- ── FAB: Neu-Aktion je Tab ── -->
+<button class="btn-fab" id="fab" onclick="fabKlick()">+</button>
+
+<!-- ── Tab-Bar ── -->
+<nav>
+  <button class="tab-btn aktiv" id="tab-btn-termine" onclick="tabWechseln('termine')">
+    <span class="icon">&#x1F4C5;</span>
+    <span>Termine</span>
+  </button>
+  <button class="tab-btn" id="tab-btn-kunden" onclick="tabWechseln('kunden')">
+    <span class="icon">&#x1F9D1;</span>
+    <span>Kunden</span>
+  </button>
+  <button class="tab-btn" id="tab-btn-pferde" onclick="tabWechseln('pferde')">
+    <span class="icon">&#x1F40E;</span>
+    <span>Pferde</span>
+  </button>
+  <button class="tab-btn" id="tab-btn-fotos" onclick="tabWechseln('fotos')">
+    <span class="icon">&#x1F4F7;</span>
+    <span>Fotos</span>
+  </button>
+</nav>
+
+<!-- ══ MODALS ══ -->
+
+<!-- Einstellungen -->
+<div class="modal-overlay versteckt" id="modal-settings" onclick="modalAusserhalbKlick(event,'modal-settings')">
+  <div class="modal-box">
+    <div class="modal-griff"></div>
+    <div class="modal-kopf">
+      <h2>&#x2699;&#xFE0F; Einstellungen</h2>
+      <button class="btn-icon" onclick="verbergeModal('modal-settings')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <label>NAS-URL (Tailscale)</label>
+      <input type="text" id="settings-nas-url" placeholder="http://100.x.x.x:3004">
+      <button class="btn-primary" onclick="settingsSpeichern()">Speichern &amp; Testen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Termin-Formular -->
+<div class="modal-overlay versteckt" id="modal-termin" onclick="modalAusserhalbKlick(event,'modal-termin')">
+  <div class="modal-box">
+    <div class="modal-griff"></div>
+    <div class="modal-kopf">
+      <h2 id="modal-termin-titel">Neuer Termin</h2>
+      <button class="btn-icon" onclick="verbergeModal('modal-termin')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <label>Pferd</label>
+      <select id="termin-pferd"></select>
+      <label>Datum</label>
+      <input type="date" id="termin-datum">
+      <div style="display:flex;gap:10px">
+        <div style="flex:1"><label>Von</label><input type="time" id="termin-von" step="900"></div>
+        <div style="flex:1"><label>Bis</label><input type="time" id="termin-bis" step="900"></div>
+      </div>
+      <label>Status</label>
+      <select id="termin-status">
+        <option value="vorreserviert">Vorreserviert</option>
+        <option value="bestaetigt">Bestaetigt</option>
+        <option value="abgeschlossen">Abgeschlossen</option>
+        <option value="abgesagt">Abgesagt</option>
+      </select>
+      <label>Bemerkung</label>
+      <textarea id="termin-bemerkung" rows="2" placeholder="Optionale Notiz&#x2026;"></textarea>
+      <button class="btn-primary" onclick="terminSpeichern()">Speichern</button>
+      <button class="btn-danger"  id="btn-termin-loeschen" onclick="terminLoeschen()" style="display:none">Termin loeschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Kunden-Formular -->
+<div class="modal-overlay versteckt" id="modal-kunde" onclick="modalAusserhalbKlick(event,'modal-kunde')">
+  <div class="modal-box">
+    <div class="modal-griff"></div>
+    <div class="modal-kopf">
+      <h2 id="modal-kunde-titel">Neuer Kunde</h2>
+      <button class="btn-icon" onclick="verbergeModal('modal-kunde')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <label>Nachname *</label>
+      <input type="text" id="kunde-name" placeholder="Mustermann" autocorrect="off">
+      <label>Vorname</label>
+      <input type="text" id="kunde-vorname" placeholder="Maria" autocorrect="off">
+      <label>Adresse</label>
+      <input type="text" id="kunde-adresse" placeholder="Musterstrasse 1, 9999 Musterort" autocorrect="off">
+      <label>Telefon</label>
+      <input type="tel" id="kunde-telefon" placeholder="+43 660 123456">
+      <button class="btn-primary" onclick="kundeSpeichern()">Speichern</button>
+      <button class="btn-danger"  id="btn-kunde-loeschen" onclick="kundeLoeschen()" style="display:none">Kunden loeschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pferd-Formular -->
+<div class="modal-overlay versteckt" id="modal-pferd" onclick="modalAusserhalbKlick(event,'modal-pferd')">
+  <div class="modal-box">
+    <div class="modal-griff"></div>
+    <div class="modal-kopf">
+      <h2 id="modal-pferd-titel">Neues Pferd</h2>
+      <button class="btn-icon" onclick="verbergeModal('modal-pferd')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <label>Name *</label>
+      <input type="text" id="pferd-name" placeholder="Luna" autocorrect="off">
+      <label>Besitzer</label>
+      <select id="pferd-kunde"></select>
+      <label>Geburtsjahr</label>
+      <input type="number" id="pferd-geburtsjahr" placeholder="2015" min="1970" max="2030">
+      <label>Geschlecht</label>
+      <select id="pferd-geschlecht">
+        <option value="">&#x2014;</option>
+        <option value="Stute">Stute</option>
+        <option value="Wallach">Wallach</option>
+        <option value="Hengst">Hengst</option>
+      </select>
+      <label>Bemerkungen</label>
+      <textarea id="pferd-bemerkungen" rows="2" placeholder="Besonderheiten&#x2026;"></textarea>
+      <button class="btn-primary" onclick="pferdSpeichern()">Speichern</button>
+      <button class="btn-danger"  id="btn-pferd-loeschen" onclick="pferdLoeschen()" style="display:none">Pferd loeschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Folgetermin-Vorschlag -->
+<div class="modal-overlay versteckt" id="modal-folgetermin" onclick="modalAusserhalbKlick(event,'modal-folgetermin')">
+  <div class="modal-box">
+    <div class="modal-griff"></div>
+    <div class="modal-kopf">
+      <h2>&#x1F501; Folgetermin?</h2>
+      <button class="btn-icon" onclick="verbergeModal('modal-folgetermin')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--text-hell);margin-bottom:12px;line-height:1.6" id="folgetermin-hinweis"></p>
+      <label>Vorgeschlagenes Datum</label>
+      <input type="date" id="folgetermin-datum" readonly>
+      <label>Abstand anpassen</label>
+      <select id="folgetermin-wochen" onchange="folgeterminDatumBerechnen()">
+        <option value="4">4 Wochen</option>
+        <option value="5" selected>5 Wochen</option>
+        <option value="6">6 Wochen</option>
+        <option value="8">8 Wochen</option>
+      </select>
+      <button class="btn-primary"   onclick="folgeterminAnlegen()">Termin anlegen</button>
+      <button class="btn-secondary" onclick="verbergeModal('modal-folgetermin')">Nicht jetzt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ── Konstanten ────────────────────────────────────────────────────────────────
+var STORAGE_KEY = 'hm_nas_url';
+var WOCHENTAGE  = ['\u200BSo','\u200BMo','\u200BDi','\u200BMi','\u200BDo','\u200BFr','\u200BSa'];
+
+// ── Globaler Zustand ──────────────────────────────────────────────────────────
+var db = { kunden: [], pferde: [], termine: [] };
+
+var aktuellerTab = 'termine';
+
+var editKundeId  = null;
+var editPferdId  = null;
+var editTerminId = null;
+var folgeterminPferdId = null;
+var folgeterminBasisDatum = null;
+
+var fotoState = {
+  nasUrl:  '',
+  pferdId: '',
+  pferd:   '',
+  datum:   '',
+  huf:     '',
+  seite:   'vorher',
+  modus:   'huf',
+  dataUrl: null,
+  queue:   [],
+  sessionFotos: []
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  var nasUrl = localStorage.getItem(STORAGE_KEY) || '';
+  fotoState.nasUrl = nasUrl;
+
+  // Heute als Standard
+  var d  = new Date();
+  var dd = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  document.getElementById('foto-datum').value    = dd;
+  document.getElementById('termin-datum').value  = dd;
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function(e) { console.warn('SW:', e); });
+  }
+
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'UPLOAD_SUCCESS') renderFotoGalerie();
+  });
+
+  if (nasUrl) {
+    verbindungTesten();
+    allesLaden();
+  } else {
+    zeigeStatus('offline', 'Keine NAS-URL \u2013 Einstellungen werden ge\u00f6ffnet\u2026');
+    setTimeout(function() { zeigeModal('modal-settings'); }, 600);
+  }
+
+  // Hash-Navigation (z.B. #fotos von upload.html-Redirect)
+  if (window.location.hash === '#fotos') tabWechseln('fotos');
+});
+
+function pad(n) { return String(n).padStart(2,'0'); }
+
+// ── API ───────────────────────────────────────────────────────────────────────
+function api(method, path, body) {
+  var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(fotoState.nasUrl + path, opts).then(function(r) { return r.json(); });
+}
+
+function allesLaden() {
+  return Promise.all([
+    api('GET', '/api/kunden').then(function(d) { if (d.success) db.kunden = d.kunden; }),
+    api('GET', '/api/pferde').then(function(d) { if (d.success) db.pferde = d.pferde; }),
+    api('GET', '/api/termine').then(function(d) { if (d.success) db.termine = d.termine; })
+  ]).then(function() {
+    renderTermine();
+    renderKunden();
+    renderPferde();
+    befuellePferdDropdowns();
+    befuelleFotoPferdSelect();
+    fotoSessionsLaden();
+  }).catch(function() {});
+}
+
+// ── Tab-Wechsel ───────────────────────────────────────────────────────────────
+function tabWechseln(tab) {
+  aktuellerTab = tab;
+  document.querySelectorAll('.tab-view').forEach(function(el) { el.classList.remove('aktiv'); });
+  document.querySelectorAll('.tab-btn').forEach(function(el)  { el.classList.remove('aktiv'); });
+  document.getElementById('tab-' + tab).classList.add('aktiv');
+  document.getElementById('tab-btn-' + tab).classList.add('aktiv');
+  // FAB verstecken im Fotos-Tab (eigene Buttons)
+  document.getElementById('fab').style.display = tab === 'fotos' ? 'none' : '';
+}
+
+function fabKlick() {
+  if (aktuellerTab === 'termine') { neuerTermin();  return; }
+  if (aktuellerTab === 'kunden')  { neuerKunde();   return; }
+  if (aktuellerTab === 'pferde')  { neuesPferd();   return; }
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+function zeigeModal(id) { document.getElementById(id).classList.remove('versteckt'); }
+function verbergeModal(id) { document.getElementById(id).classList.add('versteckt'); }
+function modalAusserhalbKlick(e, id) { if (e.target === document.getElementById(id)) verbergeModal(id); }
+
+// ── Status-Banner ─────────────────────────────────────────────────────────────
+function zeigeStatus(typ, msg) {
+  var el = document.getElementById('status-banner');
+  el.className = typ;
+  el.textContent = msg;
+}
+
+function verbindungTesten() {
+  if (!fotoState.nasUrl) return;
+  zeigeStatus('pruefen', 'Verbindung wird geprueft\u2026');
+  fetch(fotoState.nasUrl + '/api/health', { signal: AbortSignal.timeout(5000) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.success) { zeigeStatus('online', '\u2713 Verbunden \u2013 HufMacherin (Port ' + d.port + ')'); }
+      else           { zeigeStatus('offline', 'NAS antwortet mit Fehler'); }
+    })
+    .catch(function() { zeigeStatus('offline', 'NAS nicht erreichbar \u2013 Tailscale aktiv?'); });
+}
+
+// ── Einstellungen ─────────────────────────────────────────────────────────────
+function settingsSpeichern() {
+  var url = (document.getElementById('settings-nas-url').value || '').trim().replace(/\/$/, '');
+  if (!url) { alert('Bitte NAS-URL eingeben'); return; }
+  fotoState.nasUrl = url;
+  localStorage.setItem(STORAGE_KEY, url);
+  verbergeModal('modal-settings');
+  verbindungTesten();
+  allesLaden();
+}
+
+// ── Hilfsfunktionen ───────────────────────────────────────────────────────────
+function pferdName(pferdId) {
+  var p = db.pferde.find(function(x) { return x.id === pferdId; });
+  return p ? p.name : pferdId;
+}
+function kundeName(kundeId) {
+  var k = db.kunden.find(function(x) { return x.id === kundeId; });
+  return k ? (k.vorname ? k.vorname + ' ' + k.name : k.name) : '';
+}
+function pferdKunde(pferdId) {
+  var p = db.pferde.find(function(x) { return x.id === pferdId; });
+  return p ? kundeName(p.kundeId) : '';
+}
+function badgeHtml(status) {
+  return '<span class="badge badge-' + status + '">' + status + '</span>';
+}
+function statusNaechster(s) {
+  var v = { 'vorreserviert': 'bestaetigt', 'bestaetigt': 'abgeschlossen' };
+  return v[s] || null;
+}
+function datumFormatieren(d) {
+  if (!d) return '';
+  var t = new Date(d + 'T00:00:00');
+  return WOCHENTAGE[t.getDay()].trim() + ', ' + pad(t.getDate()) + '.' + pad(t.getMonth()+1) + '.' + t.getFullYear();
+}
+
+// ── TERMINE ───────────────────────────────────────────────────────────────────
+function renderTermine() {
+  var container = document.getElementById('termine-liste');
+  var termine   = db.termine.slice().sort(function(a,b) { return a.datum.localeCompare(b.datum); });
+  if (!termine.length) {
+    container.innerHTML = '<div class="leer-hinweis">&#x1F4C5; Noch keine Termine.<br>&#x2795; Tippe auf das + zum Anlegen.</div>';
+    return;
+  }
+  var html    = '';
+  var letztes = '';
+  termine.forEach(function(t) {
+    if (t.datum !== letztes) {
+      letztes  = t.datum;
+      var heute = new Date().toISOString().slice(0,10);
+      var mark  = t.datum === heute ? ' &#x2605;' : '';
+      html += '<div class="datum-trenner">' + datumFormatieren(t.datum) + mark + '</div>';
+    }
+    var naechster = statusNaechster(t.status);
+    html += '<div class="termin-karte">';
+    html += '<div class="tk-links">';
+    html += '<div class="tk-kopf"><span class="tk-pferd">' + sicher(pferdName(t.pferdId)) + '</span>' + badgeHtml(t.status) + '</div>';
+    html += '<div class="tk-kunde">' + sicher(pferdKunde(t.pferdId)) + '</div>';
+    html += '<div class="tk-datum">' + (t.von ? t.von + (t.bis ? '\u202F\u2013\u202F' + t.bis : '') : '') + '</div>';
+    if (t.bemerkung) html += '<div class="tk-bem">' + sicher(t.bemerkung) + '</div>';
+    html += '</div>';
+    html += '<div class="tk-aktionen">';
+    if (naechster) {
+      html += '<button class="btn-icon" style="font-size:14px;background:var(--gruen);color:#fff;border-radius:6px;padding:4px 7px" onclick="terminStatusWeiter(\'' + t.id + '\')" title="' + naechster + '">';
+      html += (naechster === 'bestaetigt' ? '&#x2713;' : '&#x2714;&#xFE0F;') + '</button>';
+    }
+    html += '<button class="btn-icon" onclick="terminBearbeiten(\'' + t.id + '\')">&#x270F;&#xFE0F;</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function neuerTermin() {
+  editTerminId = null;
+  document.getElementById('modal-termin-titel').textContent = 'Neuer Termin';
+  document.getElementById('termin-pferd').value    = '';
+  document.getElementById('termin-datum').value    = new Date().toISOString().slice(0,10);
+  document.getElementById('termin-von').value      = '';
+  document.getElementById('termin-bis').value      = '';
+  document.getElementById('termin-status').value   = 'vorreserviert';
+  document.getElementById('termin-bemerkung').value = '';
+  document.getElementById('btn-termin-loeschen').style.display = 'none';
+  zeigeModal('modal-termin');
+}
+
+function terminBearbeiten(id) {
+  var t = db.termine.find(function(x) { return x.id === id; });
+  if (!t) return;
+  editTerminId = id;
+  document.getElementById('modal-termin-titel').textContent = 'Termin bearbeiten';
+  document.getElementById('termin-pferd').value     = t.pferdId;
+  document.getElementById('termin-datum').value     = t.datum;
+  document.getElementById('termin-von').value       = t.von  || '';
+  document.getElementById('termin-bis').value       = t.bis  || '';
+  document.getElementById('termin-status').value    = t.status;
+  document.getElementById('termin-bemerkung').value = t.bemerkung || '';
+  document.getElementById('btn-termin-loeschen').style.display = '';
+  zeigeModal('modal-termin');
+}
+
+function terminStatusWeiter(id) {
+  var t = db.termine.find(function(x) { return x.id === id; });
+  if (!t) return;
+  var naechster = statusNaechster(t.status);
+  if (!naechster) return;
+  api('PUT', '/api/termine/' + id, { status: naechster }).then(function(d) {
+    if (!d.success) return;
+    var idx = db.termine.findIndex(function(x) { return x.id === id; });
+    if (idx !== -1) db.termine[idx].status = naechster;
+    renderTermine();
+    if (naechster === 'abgeschlossen') {
+      folgeterminPferdId    = t.pferdId;
+      folgeterminBasisDatum = t.datum;
+      folgeterminDatumBerechnen();
+      document.getElementById('folgetermin-hinweis').textContent =
+        pferdName(t.pferdId) + ' wurde abgeschlossen. Folgetermin anlegen?';
+      zeigeModal('modal-folgetermin');
+    }
+  }).catch(function() { alert('Fehler beim Speichern'); });
+}
+
+function terminSpeichern() {
+  var pferdId  = document.getElementById('termin-pferd').value;
+  var datum    = document.getElementById('termin-datum').value;
+  if (!pferdId || !datum) { alert('Pferd und Datum sind Pflichtfelder'); return; }
+  var body = {
+    pferdId:   pferdId,
+    datum:     datum,
+    von:       document.getElementById('termin-von').value,
+    bis:       document.getElementById('termin-bis').value,
+    status:    document.getElementById('termin-status').value,
+    bemerkung: document.getElementById('termin-bemerkung').value
+  };
+  var req = editTerminId
+    ? api('PUT',  '/api/termine/' + editTerminId, body)
+    : api('POST', '/api/termine', body);
+  req.then(function(d) {
+    if (!d.success) { alert('Fehler: ' + d.error); return; }
+    if (editTerminId) {
+      var idx = db.termine.findIndex(function(x) { return x.id === editTerminId; });
+      if (idx !== -1) db.termine[idx] = d.termin;
+    } else {
+      db.termine.push(d.termin);
+    }
+    verbergeModal('modal-termin');
+    renderTermine();
+  }).catch(function() { alert('Netzwerkfehler'); });
+}
+
+function terminLoeschen() {
+  if (!editTerminId) return;
+  if (!confirm('Termin wirklich l\u00f6schen?')) return;
+  api('DELETE', '/api/termine/' + editTerminId).then(function(d) {
+    if (!d.success) { alert('Fehler: ' + d.error); return; }
+    db.termine = db.termine.filter(function(x) { return x.id !== editTerminId; });
+    verbergeModal('modal-termin');
+    renderTermine();
+  }).catch(function() { alert('Netzwerkfehler'); });
+}
+
+// ── Folgetermin ───────────────────────────────────────────────────────────────
+function folgeterminDatumBerechnen() {
+  if (!folgeterminBasisDatum) return;
+  var wochen = parseInt(document.getElementById('folgetermin-wochen').value || '5', 10);
+  var d      = new Date(folgeterminBasisDatum + 'T00:00:00');
+  d.setDate(d.getDate() + wochen * 7);
+  // Auf Werktag schieben (Mo-Fr)
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  document.getElementById('folgetermin-datum').value =
+    d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+
+function folgeterminAnlegen() {
+  var datum = document.getElementById('folgetermin-datum').value;
+  if (!datum || !folgeterminPferdId) return;
+  api('POST', '/api/termine', { pferdId: folgeterminPferdId, datum: datum, status: 'vorreserviert' })
+    .then(function(d) {
+      if (!d.success) { alert('Fehler: ' + d.error); return; }
+      db.termine.push(d.termin);
+      verbergeModal('modal-folgetermin');
+      renderTermine();
+    }).catch(function() { alert('Netzwerkfehler'); });
+}
+
+// ── KUNDEN ────────────────────────────────────────────────────────────────────
+function renderKunden() {
+  var such = (document.getElementById('kunden-suche').value || '').toLowerCase();
+  var liste = db.kunden.filter(function(k) {
+    return !such || (k.name + ' ' + k.vorname).toLowerCase().includes(such);
+  }).sort(function(a,b) { return a.name.localeCompare(b.name); });
+  var container = document.getElementById('kunden-liste');
+  if (!liste.length) {
+    container.innerHTML = '<div class="leer-hinweis">Noch keine Kunden.</div>';
+    return;
+  }
+  var html = '';
+  liste.forEach(function(k) {
+    var pferdeAnzahl = db.pferde.filter(function(p) { return p.kundeId === k.id; }).length;
+    html += '<div class="list-item" onclick="kundeBearbeiten(\'' + k.id + '\')">';
+    html += '<span class="li-icon">&#x1F9D1;</span>';
+    html += '<div style="flex:1">';
+    html += '<div class="li-haupt">' + sicher(k.vorname ? k.vorname + ' ' + k.name : k.name) + '</div>';
+    html += '<div class="li-sub">' + pferdeAnzahl + ' Pferd' + (pferdeAnzahl !== 1 ? 'e' : '') + (k.adresse ? ' \u00b7 ' + sicher(k.adresse) : '') + '</div>';
+    html += '</div>';
+    html += '<span class="li-pfeil">&#x232A;</span>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function neuerKunde() {
+  editKundeId = null;
+  document.getElementById('modal-kunde-titel').textContent = 'Neuer Kunde';
+  ['kunde-name','kunde-vorname','kunde-adresse','kunde-telefon'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('btn-kunde-loeschen').style.display = 'none';
+  zeigeModal('modal-kunde');
+}
+
+function kundeBearbeiten(id) {
+  var k = db.kunden.find(function(x) { return x.id === id; });
+  if (!k) return;
+  editKundeId = id;
+  document.getElementById('modal-kunde-titel').textContent = 'Kunde bearbeiten';
+  document.getElementById('kunde-name').value    = k.name    || '';
+  document.getElementById('kunde-vorname').value = k.vorname || '';
+  document.getElementById('kunde-adresse').value = k.adresse || '';
+  document.getElementById('kunde-telefon').value = k.telefon || '';
+  document.getElementById('btn-kunde-loeschen').style.display = '';
+  zeigeModal('modal-kunde');
+}
+
+function kundeSpeichern() {
+  var name = document.getElementById('kunde-name').value.trim();
+  if (!name) { alert('Nachname ist Pflichtfeld'); return; }
+  var body = {
+    name:    name,
+    vorname: document.getElementById('kunde-vorname').value.trim(),
+    adresse: document.getElementById('kunde-adresse').value.trim(),
+    telefon: document.getElementById('kunde-telefon').value.trim()
+  };
+  var req = editKundeId
+    ? api('PUT',  '/api/kunden/' + editKundeId, body)
+    : api('POST', '/api/kunden', body);
+  req.then(function(d) {
+    if (!d.success) { alert('Fehler: ' + d.error); return; }
+    if (editKundeId) {
+      var idx = db.kunden.findIndex(function(x) { return x.id === editKundeId; });
+      if (idx !== -1) db.kunden[idx] = d.kunde;
+    } else {
+      db.kunden.push(d.kunde);
+    }
+    verbergeModal('modal-kunde');
+    renderKunden();
+    befuellePferdDropdowns();
+    befuelleFotoPferdSelect();
+  }).catch(function() { alert('Netzwerkfehler'); });
+}
+
+function kundeLoeschen() {
+  if (!editKundeId) return;
+  if (!confirm('Kunden und alle Pferde wirklich l\u00f6schen?')) return;
+  api('DELETE', '/api/kunden/' + editKundeId).then(function(d) {
+    if (!d.success) { alert(d.error); return; }
+    db.kunden = db.kunden.filter(function(x) { return x.id !== editKundeId; });
+    verbergeModal('modal-kunde');
+    renderKunden();
+    befuellePferdDropdowns();
+    befuelleFotoPferdSelect();
+  }).catch(function() { alert('Netzwerkfehler'); });
+}
+
+// ── PFERDE ────────────────────────────────────────────────────────────────────
+function renderPferde() {
+  var such = (document.getElementById('pferde-suche').value || '').toLowerCase();
+  var pferde = db.pferde.filter(function(p) {
+    return !such || p.name.toLowerCase().includes(such) || kundeName(p.kundeId).toLowerCase().includes(such);
+  }).sort(function(a,b) { return a.name.localeCompare(b.name); });
+  var container = document.getElementById('pferde-liste');
+  if (!pferde.length) {
+    container.innerHTML = '<div class="card"><div class="leer-hinweis">Noch keine Pferde.</div></div>';
+    return;
+  }
+  // Gruppieren nach Kunde
+  var gruppen = {};
+  pferde.forEach(function(p) {
+    var kn = kundeName(p.kundeId) || '\u2014';
+    if (!gruppen[kn]) gruppen[kn] = [];
+    gruppen[kn].push(p);
+  });
+  var html = '';
+  Object.keys(gruppen).sort().forEach(function(kn) {
+    html += '<div class="card"><div class="card-titel" style="font-size:12px;text-transform:uppercase;color:var(--text-hell)">' + sicher(kn) + '</div>';
+    gruppen[kn].forEach(function(p) {
+      var letzter = db.termine.filter(function(t) { return t.pferdId === p.id && t.status === 'abgeschlossen'; })
+        .sort(function(a,b) { return b.datum.localeCompare(a.datum); })[0];
+      html += '<div class="list-item" onclick="pferdBearbeiten(\'' + p.id + '\')">';
+      html += '<span class="li-icon">&#x1F40E;</span>';
+      html += '<div style="flex:1">';
+      html += '<div class="li-haupt">' + sicher(p.name) + '</div>';
+      html += '<div class="li-sub">' + (p.geschlecht || '') + (p.geburtsjahr ? ' \u00b7 *' + p.geburtsjahr : '') + (letzter ? ' \u00b7 zuletzt ' + datumFormatieren(letzter.datum) : '') + '</div>';
+      html += '</div>';
+      html += '<span class="li-pfeil">&#x232A;</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function neuesPferd() {
+  editPferdId = null;
+  document.getElementById('modal-pferd-titel').textContent = 'Neues Pferd';
+  ['pferd-name','pferd-geburtsjahr','pferd-bemerkungen'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('pferd-geschlecht').value = '';
+  document.getElementById('pferd-kunde').value      = '';
+  document.getElementById('btn-pferd-loeschen').style.display = 'none';
+  zeigeModal('modal-pferd');
+}
+
+function pferdBearbeiten(id) {
+  var p = db.pferde.find(function(x) { return x.id === id; });
+  if (!p) return;
+  editPferdId = id;
+  document.getElementById('modal-pferd-titel').textContent    = 'Pferd bearbeiten';
+  document.getElementById('pferd-name').value                 = p.name            || '';
+  document.getElementById('pferd-kunde').value                = p.kundeId         || '';
+  document.getElementById('pferd-geburtsjahr').value          = p.geburtsjahr     || '';
+  document.getElementById('pferd-geschlecht').value           = p.geschlecht      || '';
+  document.getElementById('pferd-bemerkungen').value          = p.bemerkungen     || '';
+  document.getElementById('btn-pferd-loeschen').style.display = '';
+  zeigeModal('modal-pferd');
+}
+
+function pferdSpeichern() {
+  var name    = document.getElementById('pferd-name').value.trim();
+  var kundeId = document.getElementById('pferd-kunde').value;
+  if (!name || !kundeId) { alert('Name und Besitzer sind Pflichtfelder'); return; }
+  var body = {
+    name:        name,
+    kundeId:     kundeId,
+    geburtsjahr: document.getElementById('pferd-geburtsjahr').value || null,
+    geschlecht:  document.getElementById('pferd-geschlecht').value,
+    bemerkungen: document.getElementById('pferd-bemerkungen').value.trim()
+  };
+  var req = editPferdId
+    ? api('PUT',  '/api/pferde/' + editPferdId, body)
+    : api('POST', '/api/pferde', body);
+  req.then(function(d) {
+    if (!d.success) { alert('Fehler: ' + d.error); return; }
+    if (editPferdId) {
+      var idx = db.pferde.findIndex(function(x) { return x.id === editPferdId; });
+      if (idx !== -1) db.pferde[idx] = d.pferd;
+    } else {
+      db.pferde.push(d.pferd);
+    }
+    verbergeModal('modal-pferd');
+    renderPferde();
+    befuellePferdDropdowns();
+    befuelleFotoPferdSelect();
+  }).catch(function() { alert('Netzwerkfehler'); });
+}
+
+function pferdLoeschen() {
+  if (!editPferdId) return;
+  if (!confirm('Pferd wirklich l\u00f6schen?')) return;
+  api('DELETE', '/api/pferde/' + editPferdId).then(function(d) {
+    if (!d.success) { alert(d.error); return; }
+    db.pferde = db.pferde.filter(function(x) { return x.id !== editPferdId; });
+    verbergeModal('modal-pferd');
+    renderPferde();
+    befuellePferdDropdowns();
+    befuelleFotoPferdSelect();
+  }).catch(function() { alert('Netzwerkfehler'); });
+}
+
+// ── Dropdowns befüllen ────────────────────────────────────────────────────────
+function befuellePferdDropdowns() {
+  var sortiert = db.pferde.slice().sort(function(a,b) { return a.name.localeCompare(b.name); });
+  var options  = '<option value="">&#x2014; Pferd auswaehlen &#x2014;</option>';
+  sortiert.forEach(function(p) {
+    options += '<option value="' + p.id + '">' + sicher(p.name) + (p.kundeId ? ' (' + sicher(kundeName(p.kundeId)) + ')' : '') + '</option>';
+  });
+  document.getElementById('termin-pferd').innerHTML = options;
+
+  var kSortiert = db.kunden.slice().sort(function(a,b) { return a.name.localeCompare(b.name); });
+  var kOptions  = '<option value="">&#x2014; Besitzer &#x2014;</option>';
+  kSortiert.forEach(function(k) {
+    kOptions += '<option value="' + k.id + '">' + sicher(k.vorname ? k.vorname + ' ' + k.name : k.name) + '</option>';
+  });
+  document.getElementById('pferd-kunde').innerHTML = kOptions;
+}
+
+// ── FOTOS-Tab ─────────────────────────────────────────────────────────────────
+function befuelleFotoPferdSelect() {
+  var sel = document.getElementById('foto-pferd-select');
+  var sortiert = db.pferde.slice().sort(function(a,b) { return a.name.localeCompare(b.name); });
+  var html = '<option value="">&#x2014; Pferd auswaehlen &#x2014;</option>';
+  sortiert.forEach(function(p) {
+    html += '<option value="' + p.id + '" data-name="' + sicher(p.name) + '">' +
+      sicher(p.name) + (p.kundeId ? ' (' + sicher(kundeName(p.kundeId)) + ')' : '') + '</option>';
+  });
+  sel.innerHTML = html;
+}
+
+function fotoPferdGewaehlt() {
+  var sel = document.getElementById('foto-pferd-select');
+  fotoState.pferdId = sel.value;
+  fotoState.pferd   = sel.options[sel.selectedIndex] ? (sel.options[sel.selectedIndex].dataset.name || '') : '';
+}
+
+function fotoSessionStarten() {
+  var pferdId = document.getElementById('foto-pferd-select').value;
+  var datum   = document.getElementById('foto-datum').value;
+  if (!pferdId) { alert('Bitte Pferd auswaehlen'); return; }
+  fotoState.pferdId     = pferdId;
+  var opt = document.getElementById('foto-pferd-select').options;
+  fotoState.pferd       = opt[opt.selectedIndex] ? (opt[opt.selectedIndex].dataset.name || pferdId) : pferdId;
+  fotoState.datum       = datum;
+  fotoState.sessionFotos = [];
+  document.getElementById('header-sub').textContent = datum + ' \u2013 ' + fotoState.pferd;
+  fotoZeigeScreen('aufnahme');
+}
+
+function fotoZeigeScreen(name) {
+  ['session','aufnahme','galerie'].forEach(function(n) {
+    document.getElementById('fotos-screen-' + n).style.display = n === name ? '' : 'none';
+  });
+}
+
+function fotoSessionBeenden() {
+  fotoState.pferdId  = '';
+  fotoState.pferd    = '';
+  fotoState.dataUrl  = null;
+  fotoState.queue    = [];
+  fotoState.sessionFotos = [];
+  document.getElementById('header-sub').textContent = 'Bereit';
+  document.getElementById('foto-pferd-select').value = '';
+  document.getElementById('foto-vorschau-bereich').style.display = 'none';
+  fotoSessionsLaden();
+  fotoZeigeScreen('session');
+}
+
+function fotoModusWaehlen(m) {
+  fotoState.modus = m;
+  document.getElementById('foto-modus-huf').classList.toggle('aktiv', m === 'huf');
+  document.getElementById('foto-modus-galerie').classList.toggle('aktiv', m === 'galerie');
+  document.getElementById('foto-huf-bereich').style.display     = m === 'huf'     ? '' : 'none';
+  document.getElementById('foto-galerie-bereich').style.display = m === 'galerie' ? '' : 'none';
+  document.getElementById('foto-vorschau-bereich').style.display = 'none';
+}
+
+function fotoHufWaehlen(huf) {
+  fotoState.huf = huf;
+  ['VL','VR','HL','HR'].forEach(function(h) {
+    document.getElementById('huf-' + h).classList.toggle('aktiv', h === huf);
+  });
+}
+
+function fotoSeiteWaehlen(seite) {
+  fotoState.seite = seite;
+  document.getElementById('seite-vorher').classList.toggle('aktiv',  seite === 'vorher');
+  document.getElementById('seite-nachher').classList.toggle('aktiv', seite === 'nachher');
+}
+
+function fotoEinzelnGewaehlt(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  if (!fotoState.huf) { alert('Bitte zuerst einen Huf auswaehlen'); event.target.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    fotoState.dataUrl = e.target.result;
+    document.getElementById('foto-vorschau-bild').src = fotoState.dataUrl;
+    document.getElementById('foto-vorschau-bereich').style.display = '';
+    var pfad = '_untagged/' + fotoState.datum + '_' + fotoState.pferd + '/' + fotoState.huf + '_' + fotoState.seite + '_[ts].jpg';
+    document.getElementById('foto-vorschau-pfad').textContent = pfad;
+    document.getElementById('foto-upload-status').className = 'upload-status warten';
+    document.getElementById('foto-upload-status').textContent = 'Bereit zum Hochladen';
+    document.getElementById('btn-foto-hochladen').disabled = false;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function fotoVorschauAbbrechen() {
+  fotoState.dataUrl = null;
+  document.getElementById('foto-vorschau-bereich').style.display = 'none';
+}
+
+function fotoHochladen() {
+  if (!fotoState.dataUrl || !fotoState.nasUrl) return;
+  var statusEl = document.getElementById('foto-upload-status');
+  var btnEl    = document.getElementById('btn-foto-hochladen');
+  statusEl.className = 'upload-status laden';
+  statusEl.innerHTML = '<div class="spinner"></div>\u202FWird hochgeladen\u2026';
+  btnEl.disabled = true;
+  var payload = { pferd: fotoState.pferd, datum: fotoState.datum, huf: fotoState.huf, seite: fotoState.seite, dataUrl: fotoState.dataUrl };
+  fetch(fotoState.nasUrl + '/api/upload', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.success) {
+        statusEl.className = 'upload-status erfolg';
+        statusEl.textContent = '\u2705 Gespeichert';
+        fotoState.sessionFotos.push(d);
+        fotoState.dataUrl = null;
+        setTimeout(function() { document.getElementById('foto-vorschau-bereich').style.display = 'none'; }, 1400);
+      } else { statusEl.className = 'upload-status fehler'; statusEl.textContent = '\u26A0 ' + (d.error || 'Fehler'); btnEl.disabled = false; }
+    }).catch(function(e) { statusEl.className = 'upload-status fehler'; statusEl.textContent = '\u26A0 Netzwerkfehler'; btnEl.disabled = false; });
+}
+
+// Nacherfassung
+function fotoMehrfachGewaehlt(event) {
+  var files = Array.from(event.target.files || []);
+  if (!files.length) return;
+  fotoState.queue = files.map(function(f) { return { file:f, originalname:f.name, status:'warten', dataUrl:null }; });
+  fotoRenderQueue();
+  document.getElementById('btn-queue-hochladen').style.display = '';
+  document.getElementById('btn-queue-loeschen').style.display  = '';
+  event.target.value = '';
+  fotoState.queue.forEach(function(item, idx) {
+    var r = new FileReader();
+    r.onload = function(e) { fotoState.queue[idx].dataUrl = e.target.result; };
+    r.readAsDataURL(item.file);
+  });
+}
+function fotoRenderQueue() {
+  var liste = document.getElementById('foto-queue-liste');
+  if (!fotoState.queue.length) { liste.innerHTML = ''; return; }
+  liste.innerHTML = '';
+  fotoState.queue.forEach(function(item) {
+    var el = document.createElement('div');
+    el.className = 'queue-item';
+    var icon = {warten:'\u23F3',laden:'\u21BB',erfolg:'\u2705',fehler:'\u274C'}[item.status]||'\u23F3';
+    el.innerHTML = '<span class="qi-status">' + icon + '</span><span class="qi-name">' + sicher(item.originalname) + '</span>';
+    liste.appendChild(el);
+  });
+}
+function fotoQueueLeeren() { fotoState.queue = []; fotoRenderQueue(); document.getElementById('btn-queue-hochladen').style.display='none'; document.getElementById('btn-queue-loeschen').style.display='none'; }
+function fotoQueueHochladen() {
+  if (!fotoState.nasUrl||!fotoState.pferd||!fotoState.queue.length) return;
+  var btn = document.getElementById('btn-queue-hochladen');
+  btn.disabled = true;
+  btn.textContent = '\u21BB L\u00e4uft\u2026';
+  fotoQueueNaechstes(0, btn);
+}
+function fotoQueueNaechstes(idx, btn) {
+  if (idx >= fotoState.queue.length) {
+    var ok  = fotoState.queue.filter(function(i){return i.status==='erfolg';}).length;
+    var err = fotoState.queue.filter(function(i){return i.status==='fehler';}).length;
+    btn.disabled = false;
+    btn.textContent = '\u2705 ' + ok + ' hochgeladen' + (err ? ' \u2013 ' + err + ' Fehler' : '');
+    return;
+  }
+  var item = fotoState.queue[idx];
+  if (item.status === 'erfolg') { fotoQueueNaechstes(idx+1, btn); return; }
+  if (!item.dataUrl) { setTimeout(function(){ fotoQueueNaechstes(idx, btn); }, 80); return; }
+  item.status = 'laden'; fotoRenderQueue();
+  var p = { pferd:fotoState.pferd, datum:fotoState.datum, modus:'galerie', originalname:item.originalname.replace(/\.[^.]+$/,''), quelle:(document.getElementById('foto-quelle').value||'').trim(), dataUrl:item.dataUrl };
+  fetch(fotoState.nasUrl+'/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)})
+    .then(function(r){return r.json();}).then(function(d){ item.status=d.success?'erfolg':'fehler'; fotoRenderQueue(); fotoQueueNaechstes(idx+1,btn); })
+    .catch(function(){ item.status='fehler'; fotoRenderQueue(); fotoQueueNaechstes(idx+1,btn); });
+}
+
+function fotoGalerieZeigen() {
+  var grid = document.getElementById('foto-galerie-grid');
+  document.getElementById('foto-galerie-titel').textContent = fotoState.datum + ' \u2013 ' + fotoState.pferd + ' (' + fotoState.sessionFotos.length + ' Fotos)';
+  if (!fotoState.sessionFotos.length) { grid.innerHTML = '<div class="leer-hinweis">Keine Fotos in dieser Session</div>'; }
+  else {
+    grid.innerHTML='';
+    fotoState.sessionFotos.forEach(function(f) {
+      var el = document.createElement('div'); el.className='galerie-item';
+      var img = document.createElement('img'); img.src = fotoState.nasUrl+'/api/image?path='+encodeURIComponent(f.thumbnail_path||f.file_path); img.alt=f.file_path;
+      var lbl = document.createElement('div'); lbl.className='galerie-label'; lbl.textContent=(f.file_path||'').split('/').pop();
+      el.appendChild(img); el.appendChild(lbl); grid.appendChild(el);
+    });
+  }
+  fotoZeigeScreen('galerie');
+}
+function fotoGalerieWeiter() { fotoZeigeScreen('aufnahme'); }
+
+function fotoSessionsLaden() {
+  if (!fotoState.nasUrl) return;
+  fetch(fotoState.nasUrl+'/api/sessions').then(function(r){return r.json();}).then(function(d){
+    var liste = document.getElementById('foto-sessions-liste');
+    if (!d.success||!d.sessions||!d.sessions.length) { liste.innerHTML='<div class="leer-hinweis">Noch keine Uploads</div>'; return; }
+    liste.innerHTML='';
+    d.sessions.slice(0,6).forEach(function(s){
+      var el=document.createElement('div'); el.className='list-item';
+      el.innerHTML='<span class="li-icon">&#x1F4C2;</span><span class="li-haupt">'+sicher(s.session)+'</span>';
+      liste.appendChild(el);
+    });
+  }).catch(function(){});
+}
+
+// ── XSS-Schutz ────────────────────────────────────────────────────────────────
+function sicher(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

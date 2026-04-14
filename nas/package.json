@@ -1,0 +1,12 @@
+{
+  "name": "hufmacherin-nas-server",
+  "version": "1.0.0",
+  "description": "NAS API-Server fuer HufMacherin Foto-Upload",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0"
+  }
+}
